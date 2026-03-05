@@ -209,9 +209,9 @@ function page() {
                                                             <div className='flex items-center justify-between gap-2 '>
                                                                 <InputGroup className='border-neutral-800'>
                                                                     {/* <InputGroupInput placeholder="Search..." className='text-neutral-400' value={userToPermission ? userToPermission : ''} onChange={(e) => {
-                                                                    if (e.target.value == "") {
-                                                                        // setusersWithEmailSimilarity(null)
-                                                                    }
+                                                                    // if (e.target.value == "") {
+                                                                    //     setusersWithEmailSimilarity(null)
+                                                                    // }
                                                                     // setUserToPermission(e.target.value)
                                                                 }} /> */}
                                                                     <InputGroupAddon>
@@ -287,11 +287,10 @@ function page() {
                                                                             <div>
                                                                                 {/* <h4 className='text-md font-light font-figtree text-neutral-200 text-left '>{user?.username}</h4>
                                                                             <h6 className='font-sans text-sm'>{user?.primaryEmailAddress?.emailAddress}</h6> */}
-                                                                                <h4 className='text-md font-light font-figtree text-neutral-200 text-left '>public user</h4>
-                                                                                <h6 className='font-sans text-sm'>public email</h6>
+                                                                                <h4 className='text-md font-light font-figtree text-neutral-200 text-left '>{folderFileData?.author}</h4>
                                                                             </div>
                                                                             <div>
-                                                                                <h6 className='font-sans text-sm'>{folderFileData?.permission_data?.permission_type || 'public'}</h6>
+                                                                                <h6 className='font-sans text-sm'>OWNER</h6>
                                                                             </div>
                                                                         </div>
                                                                     </div>
