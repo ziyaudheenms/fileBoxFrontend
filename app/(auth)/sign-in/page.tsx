@@ -121,6 +121,7 @@ function page() {
                     ) : ("Sign In")
                   }
                 </div>
+                <div className='font-sans text-center'>Don't have an account?<span className='text-blue-500 hover:cursor-pointer' onClick={() => router.push("/sign-up")}> sign-up</span></div>
               </div>
             </div>
           </div>
