@@ -3,8 +3,8 @@ import Image from 'next/image'
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import { IconDashboard, IconPasswordUser } from '@tabler/icons-react';
+import { SharableErrorType } from '@/data/ErrorStateData';
 
-type SharableErrorType = "NO-ACCESS" | "LINK-EXPIRED" | "INCORRECT-PASSWORD" | "ACCESS-LIMIT-CROSSED" | "NOT-FOUND"
 
 function SharableError({error}:{error:SharableErrorType}) {
     const ERRORCONFIG = {

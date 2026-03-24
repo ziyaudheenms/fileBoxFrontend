@@ -31,9 +31,11 @@ interface Props {
     onHandleFavoriteUpdation: (fileFolderID: number) => void;
     isTrashPage: boolean;
     isFavoritePage: boolean;
+    isShared? : boolean;
+    shareUUID? :string;
 }
 
-function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, onHandleFavoriteUpdation, isTrashPage, isFavoritePage }: Props) {
+function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, onHandleFavoriteUpdation, isTrashPage, isFavoritePage , isShared , shareUUID }: Props) {
     return (
         <div>
             {
@@ -43,7 +45,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                             <div key={item.id} className='border border-neutral-800 rounded-lg hover:border-neutral-700 '>
                                 {
                                     item.isfolder ? (
-                                        <Link href={`/dashboard/${item.id}`}>
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`}>
                                             <div className='h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
                                                 <IconFolder stroke={2} height={90} width={90} className='text-neutral-400' />
                                             </div>

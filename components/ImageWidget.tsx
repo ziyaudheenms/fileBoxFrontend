@@ -1,20 +1,12 @@
 'use client'
-import React, { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
-import Navbar from '@/components/navbar';
-import axios from 'axios';
-import { useAuth } from '@clerk/nextjs';
+import React from 'react'
 import InfiniteLoader from '@/components/InfiniteLoader';
-import ImageProcessing from '@/components/ImageProcessing';
 import Image from 'next/image';
-import { IconCopyX, IconDownload, IconLink, IconPencilCheck, IconShare, IconUser } from '@tabler/icons-react';
+import { IconCopyX, IconDownload, IconPencilCheck, IconUser } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { User2 } from 'lucide-react';
-import { toast } from 'sonner';
-import SharableError from '@/components/SharableError';
 import ShareCard from '@/components/ShareCard';
-import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData';
+
 
 interface FileFolderProps {
     id: number;
@@ -22,20 +14,13 @@ interface FileFolderProps {
     size: number;
     parentFolder: string | null;
     name: string;
+    type_of_file_folder : string | null;
     uploaded_at: Date;
     updated_at: Date;
     isfolder: boolean;
     is_root_folder: boolean;
     file_url: string | null;
     file_extension: string | null;
-    upload_status: string;
-    celery_task_ID: string | null;
-    is_trash: boolean;
-    is_favorite: boolean;
-    permission_data?: {
-        permission_type?: string;
-        permission_granded_at?: Date;
-    }
 }
 
 function getRelativeTime(date: Date | string | undefined): string {
@@ -57,91 +42,27 @@ function getRelativeTime(date: Date | string | undefined): string {
     return 'just now';
 }
 
-// type SharableErrorType = "NO-ACCESS" | "LINK-EXPIRED" | "INCORRECT-PASSWORD" | "ACCESS-LIMIT-CROSSED" | "NOT-FOUND"
-// const ERROR_MAP: Record<number, SharableErrorType> = {
-//     4002: 'NO-ACCESS',
-//     5004: 'LINK-EXPIRED',
-//     5008: 'INCORRECT-PASSWORD',
-//     5006: 'ACCESS-LIMIT-CROSSED',
-//     5002: 'NOT-FOUND'
-// };
+interface ImageWidgetConfigurePros  {
+    isPreview : boolean;
+    fileHash?: string;
+    sharableUUID : string;
+    userPermission?: string;
+    fileFolderData : FileFolderProps;
+    canShare: boolean;
+    canDelete: boolean;
+    canEdit: boolean;
+}
 
-function page() {
-    const params = useParams();
-    const { getToken } = useAuth()
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<SharableErrorType | null>(null)
-    const [folderFileData, setFolderFileData] = useState<FileFolderProps>({} as FileFolderProps)
-
-    const HandleGetSharedImage = async () => {
-        setLoading(true)
-        setError(null) // Reset error state before fetching new data
-        const jwtToken = await getToken() //getting the authentication token ....................
-        axios
-            .post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharedFileFolder?sharableUUID=${params.id ? params.id as string : undefined}`, {}, {
-                headers: {
-                    authorization: `Bearer ${jwtToken}`,
-                },
-            },)
-            .then((response) => {
-                console.log(response.data)
-                if (response.data.status_code == 5000) {
-                    setFolderFileData(response.data.data)
-                    toast.success("successfully fetched the data")
-                }
-                else {
-                    const currentError = ERROR_MAP[response.data.status_code];
-                    if (currentError) {
-                        setError(currentError);
-                    } else {
-                        toast.error("something went wrong while fetching the data")
-                    }
-                }
-            }).catch((error) => {
-                console.error(error)
-            })
-            .finally(() => {
-                setLoading(false)
-            })
-    }
-
-    useEffect(() => {
-        HandleGetSharedImage()
-    }, [])
-
-    if (loading) {
-        return <InfiniteLoader />
-    }
-
-    // handled the error component to show the error based on the error type we get from the backend when we try to fetch the shared file or folder data using the sharable link and if there is an error we set the error state with the error type and then render the SharableError component with the error type as a prop to show the appropriate error message and image to the user based on the error type .....
-    if (error) {
-        return (
-            <SharableError error={error as SharableErrorType} />
-        )
-    }
-
-
-    // setting up the permissions based on the role of the user for this file .....
-    const userRole = folderFileData.permission_data?.permission_type || 'PUBLIC';
-    const canEdit = ['EDIT', 'ADMIN', 'OWNER'].includes(userRole);
-    const canShare = ['ADMIN', 'OWNER'].includes(userRole);
-    const canDelete = ['OWNER'].includes(userRole);  // only belongs to the owner of the file or folder can delete it .....x
-
+function ImageWidget({isPreview , fileHash , sharableUUID , userPermission , fileFolderData , canShare , canDelete , canEdit} : ImageWidgetConfigurePros) {
+    
     return (
-        <div>
-            <Navbar />
-
             <div className='flex w-full  h-screen overflow-y-scroll no-scrollbar py-2 px-2'>
                 {
-                    folderFileData.file_url ? (
+                    fileFolderData.file_url ? (
                         <div className='w-[60%] flex justify-center items-center h-full px-5 relative'>
-                            {
-                                folderFileData.upload_status == 'PENDING' || folderFileData.upload_status == 'PROCESSING' || folderFileData.upload_status == 'FAILED' ? (
-                                    <ImageProcessing parent='image' />
-                                ) : (
-                                    <Image src={folderFileData?.file_url} height={500} width={500} alt='Uploaded Image in a big view' className=' w-full h-fit absolute top-0 left-0 right-0' />
-                                )
-                            }
+                            
+                            <Image src={fileFolderData?.file_url} height={500} width={500} alt='Uploaded Image in a big view' className=' w-full h-fit absolute top-0 left-0 right-0' />
+                              
                         </div>
                     ) :
                         <InfiniteLoader />
@@ -153,13 +74,13 @@ function page() {
                             <div className='flex flex-col gap-2'>
                                 <div className='font-sans flex items-center justify-between'>
                                     <h5 className='text-neutral-400'>Name</h5>
-                                    <h5 className='text-neutral-100'>{folderFileData.name}</h5>
+                                    <h5 className='text-neutral-100'>{fileFolderData.name}</h5>
                                 </div>
                                 <div className='font-sans flex items-center justify-between'>
                                     <h5 className='text-neutral-400'>Size</h5>
                                     <h5 className='text-neutral-100'>
                                         {(() => {
-                                            const size = folderFileData.size;
+                                            const size = fileFolderData.size;
                                             if (typeof size !== 'number' || isNaN(size)) return '';
                                             if (size >= 1024 * 1024) {
                                                 return (size / (1024 * 1024)).toFixed(2) + ' GB';
@@ -173,11 +94,11 @@ function page() {
                                 </div>
                                 <div className='font-sans flex items-center justify-between'>
                                     <h5 className='text-neutral-400'>Uploaded At</h5>
-                                    <h5 className='text-neutral-100'>{getRelativeTime(folderFileData.uploaded_at)}</h5>
+                                    <h5 className='text-neutral-100'>{getRelativeTime(fileFolderData.uploaded_at)}</h5>
                                 </div>
                                 <div className='font-sans flex items-center justify-between'>
                                     <h5 className='text-neutral-400'>Type</h5>
-                                    <h5 className='text-neutral-100'>{folderFileData.file_extension}</h5>
+                                    <h5 className='text-neutral-100'>{fileFolderData.file_extension}</h5>
                                 </div>
                             </div>
 
@@ -187,7 +108,7 @@ function page() {
                                     {
                                         canShare ? (
                                             <>
-                                                <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={true}/>
+                                                <ShareCard fileHash={fileHash} type={'image'} isShared={true}/>
                                                 {
                                                     canDelete ? (
                                                         <Button className='w-[30%] bg-neutral-950 border border-neutral-800 hover:bg-red-600'>
@@ -257,10 +178,7 @@ function page() {
                     </div>
                 </div>
             </div>
-
-
-        </div>
     )
 }
 
-export default page
+export default ImageWidget

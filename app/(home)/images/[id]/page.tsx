@@ -425,8 +425,8 @@ function page() {
 
                                     <div className='w-full pb-2 pt-5 border-t-2 border-t-neutral-800'>
                                         <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconDownload stroke={2} height={30} width={30} className='text-lg' />Download</Button>
-                                        <div className='w-full py-2 flex gap-2 font-figtree'>
-                                          <ShareCard fileFolderID={folderFileData.id} />
+                                        <div className='w-full py-2 flex items-center gap-2 font-figtree'>
+                                          <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={false}/>
                                             <Button className='w-[30%] bg-neutral-950 border border-neutral-800 hover:bg-red-600'>
                                                 <IconCopyX stroke={2} className='text-red-900 ' height={30} width={30} />
                                             </Button>

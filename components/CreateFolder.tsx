@@ -54,7 +54,7 @@ function CreateFolder({ isRoot, folderID }: FolderCreateProps) {
           toast.success("Folder Successfully Created")
          
 
-          isRoot ? router.push(`dashboard/${res.data.data}`) : router.push(`dashboard/${folderID}/${res.data.data}`)
+          isRoot ? router.push(`dashboard/${res.data.data}`) : router.push(`dashboard/${res.data.data}`)
         }
         else if (res.data.status_code == 4001) {
           toast.success("Folder Creation Failed: Folder with Same Name Already Exists")

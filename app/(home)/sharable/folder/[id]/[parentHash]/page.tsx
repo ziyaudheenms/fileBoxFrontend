@@ -5,10 +5,7 @@ import { ButtonGroup } from '@/components/ui/button-group'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { IconAdjustmentsAlt, IconDotsVertical, IconFileStar, IconFileUpload, IconFolder, IconHome, IconLayoutGridRemove, IconList, IconTrash, IconUpload } from '@tabler/icons-react'
 import { SearchIcon } from 'lucide-react'
-import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
-import Image from 'next/image'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuShortcut, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import CreateFolder from '@/components/CreateFolder'
 import { useParams } from 'next/navigation';
 import axios from 'axios'
@@ -16,7 +13,6 @@ import { useAuth } from '@clerk/nextjs'
 import InfiniteLoader from '@/components/InfiniteLoader'
 import { EmptyPage } from '@/components/EmptyPage'
 import FileUpload from '@/components/FileUpload'
-import ImageProcessing from '@/components/ImageProcessing'
 import FileFolderCards from '@/components/FileFolderCards'
 import { toast } from 'sonner'
 import {
@@ -28,6 +24,8 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import ShareCard from '@/components/ShareCard'
+import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData'
+import SharableError from '@/components/SharableError'
 
 interface FileFolderProps {
     id: number;
@@ -57,31 +55,45 @@ function page() {
     const [gridLayout, setgridLayout] = useState(true)
     const [loading, setLoading] = useState(false)
     const [FileFolderData, setFileFolderData] = useState<Array<FileFolderProps>>([])
-    const [getREQUEST, setGETREQUEST] = useState<string>('http://127.0.0.1:8000/api/v1/fileFolders')
+    const [getREQUEST, setGETREQUEST] = useState<string>('api/v1/get/sharedFileFolder/child')
     const [hasData, setHasData] = useState<boolean>(true)
     const [secondIteration, setSecondIteration] = useState<boolean>(false)
     const [empty, setEmpty] = useState<boolean>(false)
     const [breadCrum, setBreadCrum] = useState<BreadCrumProps[]>([])
     const params = useParams();
+    const [userPermission, setUserPermission] = useState<string>("PUBLIC")
+    const [error, setError] = useState<SharableErrorType | null>(null)
+    
+//  first call the access permissions API to get the user permissions for the current sharable link and then based on the permissions fetch the data and render the UI accordingly.
 
-    const HandleGetAllFileFolderData = async () => {
+     const HandleGetAllFileFolderData = async () => {
+        setEmpty(false)
         setHasData(false)
         setLoading(true)
         setBreadCrum([]) // Clear breadcrumb state before fetching new data
         const jwtToken = await getToken()
-        localStorage.setItem("refreshToken", jwtToken || "")
         // GET Request that is used to fetch all the folder/file data
         axios
-            .get(`${getREQUEST}${secondIteration ? '&' : '?'}parentFolderID=${params.id ? params.id[params.id.length - 1] as string : undefined}`, {
+            .get(`${process.env.NEXT_PUBLIC_DOMAIN}/${getREQUEST}${secondIteration ? '&' : '?'}sharableUUID=${params.id ? params.id as string : undefined}&parentID=${params.parentHash ? params.parentHash as string : undefined}`, {
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
-                },
-
+                }
             })
             .then((res) => {
                 console.log(res.data)
-                if (res.data.status_code === 5002) {
+                if (res.data.status_code === 5001) {
+                    toast.error('Record not found!!')
+                }
+                else if (res.data.status_code === 5002) {
                     setEmpty(true)
+                    let breadCrumbDetails = res.data.breadcrumb_details
+                    // calculations for integrating the breadcrums
+                    let path_details = breadCrumbDetails.map((item: any) => ({
+                        folderName: item.name,
+                        folderID: item.hashed_id
+                    }));
+
+                    setBreadCrum(path_details);
                 }
                 else if (res.data.status_code === 5000) {
                     setFileFolderData((prev) => {
@@ -95,32 +107,23 @@ function page() {
                     // setFolderFileData(res.data.data)  // used this expression to append new data to existing state array
 
                     // calculations for integrating the breadcrums
-                    let pathname = res.data.data[0].pathnames
-                    let pathnames = pathname.split('/')
+                    let breadCrumbDetails = res.data.breadcrumb_details
+                    // calculations for integrating the breadcrums
+                    let path_details = breadCrumbDetails.map((item: any) => ({
+                        folderName: item.name,
+                        folderID: item.hashed_id
+                    }));
 
-                    let id = res.data.data[0].path
-                    let ids = id.split('/')
+                    setBreadCrum(path_details);
 
-                    pathnames.map((path: string) => {
-                        let path_detail = {
-                            folderName: path,
-                            folderID: ids[pathnames.indexOf(path)]
-                        }
-                        pathnames.forEach((path, idx) => {
-                            const path_detail = {
-                                folderName: path,
-                                folderID: ids[idx],
-                            }
-
-                            setBreadCrum((prev) => {
-                                if (prev.some((item) => item.folderID === path_detail.folderID)) {
-                                    return prev
-                                }
-                                return [...prev, path_detail]
-                            })
-                        })
-                    })
-
+                }
+                else {
+                    const currentError = ERROR_MAP[res.data.status_code];
+                    if (currentError) {
+                        setError(currentError);
+                    } else {
+                        toast.error("something went wrong while fetching the data")
+                    } 
                 }
 
                 if (res.data.message.next_cursor != null) {
@@ -134,7 +137,7 @@ function page() {
                 console.log("Successfully fetched all folder/file data")
             })
             .catch((err) => {
-
+                console.error("Error fetching folder/file data:", err)
             })
             .finally(() => {
                 setLoading(false)
@@ -142,6 +145,36 @@ function page() {
 
     }
 
+    const handleRequestAccessPermissions = async () => {
+        const jwtToken = await getToken()
+        axios.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharedFileFolder?sharableUUID=${params.id ? params.id as string : undefined}` , {} , {
+                headers: {
+                    authorization: `Bearer ${jwtToken}`,
+                },
+            })
+            .then((res) => {
+                console.log(res.data)
+                if (res.data.status_code === 5000) {
+                    setUserPermission(res.data.data.permission_details.permission_type)
+                    HandleGetAllFileFolderData()
+                }
+                else if (res.data.status_code === 5002) {
+                    toast.error('Record not found!!')
+                }
+                else {
+                    const currentError = ERROR_MAP[res.data.status_code];
+                    if (currentError) {
+                        setError(currentError);
+                    } else {
+                        toast.error("something went wrong while fetching the data")
+                    } 
+                }
+            })
+            .catch((err) => {
+                console.log(err)
+            })
+    }
+   
     const GetUpdatedFileFolderData = async (id: number) => {
         setHasData(false)
         setLoading(true)
@@ -149,15 +182,26 @@ function page() {
         console.log("JWT TOKEN IN UPDATE FUNC OF DASHBOARD PAGE SINGLE PAGE", jwtToken)
         // GET Request that is used to fetch all the folder/file data
         axios
-            .get(`${getREQUEST}?parentFolderID=${params.id ? params.id[params.id.length - 1] as string : undefined}`, {
+            .get(`${process.env.NEXT_PUBLIC_DOMAIN}/${getREQUEST}?sharableUUID=${params.id ? params.id as string : undefined}&parentID=${params.parentHash ? params.parentHash as string : undefined}`, {
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
                 },
             })
             .then((res) => {
                 console.log(res.data.status_code)
-                if (res.data.status_code === 5002) {
+                if (res.data.status_code === 5001) {
+                    toast.error('Record not found!!')
+                }
+                else if (res.data.status_code === 5002) {
                     setEmpty(true)
+                    let breadCrumbDetails = res.data.breadcrumb_details
+                    // calculations for integrating the breadcrums
+                    let path_details = breadCrumbDetails.map((item: any) => ({
+                        folderName: item.name,
+                        folderID: item.hashed_id
+                    }));
+
+                    setBreadCrum(path_details);
                 }
                 else if (res.data.status_code === 5000) {
                     console.log(res.data.data)
@@ -234,8 +278,20 @@ function page() {
 
 
     useEffect(() => {
-        HandleGetAllFileFolderData()
+        handleRequestAccessPermissions()
     }, [])
+
+
+    if (error) {
+        return (
+            <SharableError error={error as SharableErrorType} />
+        )
+    }
+    console.log("USER PERMISSION FOR THIS SHARABLE LINK IS ", userPermission)
+    const canEdit = ['EDIT', 'ADMIN', 'OWNER'].includes(userPermission);
+    const canShare = ['ADMIN', 'OWNER'].includes(userPermission);
+    const canDelete = ['OWNER'].includes(userPermission);
+
 
     return (
         <div>
@@ -260,10 +316,10 @@ function page() {
                                 {
                                     breadCrum.map((bread: BreadCrumProps) => {
                                         return (
-                                            <div key={`${bread.folderID}-separator`} className='flex items-center gap-1'>
+                                            <div key={bread.folderID != null ? `${bread.folderID}-separator` : `${params.id ? params.id as string : undefined}-separator`} className='flex items-center gap-1'>
                                                 <BreadcrumbSeparator className='text-lg' />
                                                 <BreadcrumbItem >
-                                                    <BreadcrumbLink href={`/dashboard/${bread.folderID}`}>
+                                                    <BreadcrumbLink href={ bread.folderID != null ? `/sharable/folder/${params.id ? params.id as string : undefined}/${bread.folderID}` : `/sharable/folder/${params.id ? params.id as string : undefined}`}>
                                                         <h4 className='text-neutral-100 font-sans'>{bread.folderName}</h4>
                                                     </BreadcrumbLink>
                                                 </BreadcrumbItem>
@@ -309,7 +365,7 @@ function page() {
 
                     {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
 
-                    <FileFolderCards folderFileData={FileFolderData} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false} onHandleFavoriteUpdation={HandleFavoriteUpdation} onHandleTrashUpdation={HandleTrashUpdation} />
+                    <FileFolderCards folderFileData={FileFolderData} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false} onHandleFavoriteUpdation={HandleFavoriteUpdation} onHandleTrashUpdation={HandleTrashUpdation} isShared={true} shareUUID={params.id ? params.id as string : undefined}/>
 
                     {
                         empty ? (
@@ -344,13 +400,31 @@ function page() {
                 <div className='w-[27%] px-2 py-2 flex flex-col gap-3 h-screen overflow-y-scroll no-scrollbar'>
 
                     {/*UPLOAD OPTIONS */}
-                    <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
-                    <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
-                    <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false}/>
+
+                    {
+                        canEdit ? (
+                            <div className='flex flex-col gap-2'>
+                                <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
+                                <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
+                            </div>
+
+                        ) : (
+                            <div></div>
+                        )
+                    }
+                    {
+                        canShare ? (
+                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'}  parentHash={params.parentHash ? params.id as string : null} isShared={true}/>
+
+                        ) : (
+                            <div></div>
+                        )
+                    }
                 </div>
             </div>
         </div>
     )
+
 }
 
 export default page

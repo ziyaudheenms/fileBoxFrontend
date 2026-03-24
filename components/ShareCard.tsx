@@ -9,9 +9,9 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import React, { useEffect, useState } from 'react'
+import React, { use, useEffect, useState } from 'react'
 import { Button } from './ui/button'
-import { IconCopyX, IconEdit, IconFocusAuto, IconGlobe, IconGlobeFilled, IconLink, IconLock, IconLockAccess, IconShare } from '@tabler/icons-react'
+import { IconCopyX, IconCross, IconEdit, IconFocusAuto, IconGlobe, IconGlobeFilled, IconLink, IconLock, IconLockAccess, IconShare } from '@tabler/icons-react'
 import { InputGroup, InputGroupAddon, InputGroupInput } from './ui/input-group'
 import { User2 } from 'lucide-react'
 import { ButtonGroup } from './ui/button-group'
@@ -46,23 +46,31 @@ interface permissionUserProps {
 }
 
 interface props {
-    fileFolderID: number
+    fileFolderID?: number
+    type: string
+    isShared : boolean
+    fileHash? : string
+    parentHash? : string | null
+    UUID? : string | null
 }
 
 
-function ShareCard({ fileFolderID }: props) {
+function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHash}: props) {
 
     const { user } = useUser()
     const { getToken } = useAuth()
     const [loading, setLoading] = useState(false)
     const [userToPermission, setUserToPermission] = useState<string | null>(null)  // Input box value for searching the email similar user.
-    const [permissionUsers, setPermissionUsers] = useState<permissionUserProps[]>([])  //used to store the array of users which are going to get the permission in the format -> emial:permissionChoice
+    const [userToBeAssigned, setUserToBeAssigned] = useState<permissionUserProps[]>([])  //used to store the array of users which are going to get the permission in the format -> emial:permissionChoice
     const [permissionChoice, setPermissionChoice] = useState("VIEW") // used to store the permission choice 
     const [usersWithPermission, setUsersWithPermission] = useState<usersWithPermission[]>([]) //used to store those who already has the permission.
     const [usersWithEmailSimilarity, setusersWithEmailSimilarity] = useState<usersWithEmailSimilarity[] | null>(null)    // this state is used to store the emails we get with similarity
     const [permissionLoader, setpermissionLoader] = useState<Boolean>(false)
     const [isPublic, setIsPublic] = useState<Boolean>(true)
     const [upDatePermissionLoader, setupDatePermissionLoader] = useState<Boolean>(false)
+    const [editingMode, setEditiongMode] = useState<Boolean>(false)
+    const [updatePermissionChoice, setupdatePermissionChoice] = useState('') // this state is used to store the updated permission choice for the user whose permission we want to update.
+    const [userToBeRemoved, setUserToBeRemoved] = useState<permissionUserProps[]>([]) // this state is used to store the user which we want to remove from the list of users with permission.
 
     const getTheUserForAssigningPermission = async () => {
         const jwtToken = await getToken()
@@ -97,7 +105,7 @@ function ShareCard({ fileFolderID }: props) {
             "email": userEmail,
             "permission": userPermission
         } // the format in which the details is send to the backend.
-        setPermissionUsers((prev) => [...(Array.isArray(prev) ? prev : []), permissionObject])
+        setUserToBeAssigned((prev) => [...(Array.isArray(prev) ? prev : []), permissionObject])
         setusersWithEmailSimilarity(null)
         setUserToPermission(null)
         toast(`${userEmail}`, {
@@ -109,7 +117,7 @@ function ShareCard({ fileFolderID }: props) {
         })
     }
 
-     const getPermittedUsers = async () => {
+    const getPermittedUsers = async () => {
         setpermissionLoader(true)
         const jwtToken = await getToken()
         axios
@@ -141,6 +149,25 @@ function ShareCard({ fileFolderID }: props) {
             })
     }
 
+    const HandleUpdateUserPermission = async (userEmail: string, userPermission: string) => {
+        const permissionObject = {
+            "email": userEmail,
+            "permission": userPermission
+        }
+        console.log(permissionObject)
+        if (userToBeAssigned.some((item) => item.email === permissionObject.email)) {
+            setUserToBeAssigned((prev) =>
+                prev.map((item) =>
+                    item.email === permissionObject.email
+                        ? { ...item, permission: permissionObject.permission }
+                        : item
+                )
+            )
+        } else {
+            setUserToBeAssigned((prev) => [...(Array.isArray(prev) ? prev : []), permissionObject])
+        }
+    }
+
     const HandleUpdatePermission = async () => {
         setupDatePermissionLoader(true)
         console.log("entered into the function")
@@ -148,7 +175,8 @@ function ShareCard({ fileFolderID }: props) {
         axios.post(
             `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/permission/grandUsers?fileFolderID=${fileFolderID}`,
             {
-                'usersToGrandPermission': permissionUsers,
+                'usersToGrandPermission': userToBeAssigned,
+                'usersToRemovePermission': userToBeRemoved,
             },
             {
                 headers: {
@@ -159,6 +187,10 @@ function ShareCard({ fileFolderID }: props) {
             .then((res) => {
                 if (res.data.status_code == 5000) {
                     toast.success('Updated the Users With Permission')
+                    // clearing the tracker state variables
+                    setUserToBeAssigned([])
+                    setUserToBeRemoved([])
+                    setEditiongMode(false)
                     getPermittedUsers()
                 }
                 else if (res.data.status_code == 5003) {
@@ -180,12 +212,12 @@ function ShareCard({ fileFolderID }: props) {
             })
     }
 
-   
+
 
     const getShareLink = async () => {
         const jwtToken = await getToken()
         axios
-            .post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharableLink?fileFolderID=${fileFolderID}&type=image`, {
+            .post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharableLink?fileFolderID=${fileFolderID}&type=${type}`, {
                 "access_type": isPublic ? 'PUBLIC' : 'PRIVATE'
             }, {
                 headers: {
@@ -227,13 +259,22 @@ function ShareCard({ fileFolderID }: props) {
         }
     }, [userToPermission])
 
+
+    if (fileFolderID == 0) {
+        return (
+            <div>
+                <h1>Some Error Occured</h1>
+            </div>
+        )
+    }
+
     return (
         <div className='w-full py-2 flex gap-2 font-figtree'>
             <Dialog>
                 <form className='w-full'>
                     <DialogTrigger asChild>
                         <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100' onClick={() => {
-                            // getPermittedUsers()
+                            getPermittedUsers()
                         }}> <IconShare stroke={2} />Share</Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-sm bg-neutral-950 border-2 border-neutral-800 text-nwutra">
@@ -308,11 +349,17 @@ function ShareCard({ fileFolderID }: props) {
                         </div>
                         <div>
                             <div className="flex justify-between items-center">
-                            <h3 className='text-neutral-400 font-sans '>People with access</h3>
-                            <div className="text-neutral-100 flex items-center gap-1 py-1 px-3 rounded-sm bg-neutral-900">
-                                <IconEdit stroke={1} className="h-5 w-5"/> 
-                                <h5 className="text-neutral-400 font-sans text-sm font-light">Edit</h5>
-                            </div>
+                                <h3 className='text-neutral-400 font-sans '>People with access</h3>
+
+                                {/* edit button */}
+                                {
+
+                                }
+                                <div className="text-neutral-100 flex items-center gap-1 py-1 px-3 rounded-sm bg-neutral-900" onClick={() => setEditiongMode(!editingMode)}>
+                                    <IconEdit stroke={1} className="h-5 w-5" />
+                                    <h5 className="text-neutral-400 font-sans text-sm font-light">Edit</h5>
+                                </div>
+
                             </div>
                             <div className='w-full gap-3 overflow-y-scroll h-24 no-scrollbar'>
 
@@ -328,6 +375,7 @@ function ShareCard({ fileFolderID }: props) {
                                 {
                                     usersWithPermission.map((user: usersWithPermission) => (
                                         <div className='w-full flex items-center gap-2' key={user.id}>
+                                            {/* profile pic */}
                                             <div className='w-[10%]'>
                                                 {
                                                     user ? (
@@ -337,14 +385,65 @@ function ShareCard({ fileFolderID }: props) {
                                                     )
                                                 }
                                             </div>
+                                            {/* other user details */}
                                             <div className='w-[90%] text-neutral-400 flex items-center justify-between'>
-                                                <div>
-                                                    <h4 className='text-md font-light font-figtree text-neutral-200 text-left '>{user.username}</h4>
-                                                    <h6 className='font-sans text-sm'>{user.email}</h6>
-                                                </div>
-                                                <div>
-                                                    <h6 className='font-sans text-sm'>{user.permission}</h6>
-                                                </div>
+                                                {
+                                                    userToBeRemoved.some((userToBeRemoved) => userToBeRemoved.email === user.email) ? (
+                                                        <div>
+                                                            <h4 className='text-md font-light font-figtree text-neutral-200 text-left line-through'>{user.username}</h4>
+                                                            <h6 className='font-sans text-sm'>{user.email}</h6>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <h4 className='text-md font-light font-figtree text-neutral-200 text-left '>{user.username}</h4>
+                                                            <h6 className='font-sans text-sm'>{user.email}</h6>
+                                                        </div>
+                                                    )
+                                                }
+
+                                                {
+                                                    editingMode && user.permission != 'OWNER' ? (
+                                                        <>
+
+                                                            <select
+                                                                name="permission"
+                                                                id="permission"
+                                                                className='border border-neutral-800 rounded-sm py-1.5 font-sans font-extralight text-neutral-400 bg-neutral-950 text-sm'
+                                                                value={updatePermissionChoice || user.permission}
+                                                                onChange={(e) => {
+                                                                    setupdatePermissionChoice(e.target.value)
+                                                                    HandleUpdateUserPermission(user.email, e.target.value)
+                                                                }}
+                                                            >
+                                                                <option value={user.permission}>{user.permission.charAt(0) + user.permission.slice(1).toLowerCase()}</option>
+                                                                {['VIEW', 'EDIT', 'ADMIN'].filter(p => p !== user.permission).map(p => (
+                                                                    <option key={p} className='font-sans text-sm' value={p}>
+                                                                        {p.charAt(0) + p.slice(1).toLowerCase()}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            <IconCopyX stroke={1} className="h-5 w-5 text-red-600" onClick={() => {
+                                                                let permissionObject = {
+                                                                    "email": user.email,
+                                                                    "permission": user.permission
+                                                                }
+                                                                // toggle that is used to add or remove the user from the list of users to be removed. if the user is already in the list then remove it otherwise add it to the list.
+
+                                                                if (userToBeRemoved.some((item) => item.email === permissionObject.email)) {
+                                                                    setUserToBeRemoved((prev) => prev.filter((item) => item.email !== permissionObject.email))
+                                                                } else {
+                                                                    setUserToBeRemoved((prev) => [...(Array.isArray(prev) ? prev : []), permissionObject])
+                                                                }
+                                                            }} />
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div>
+                                                                <h6 className='font-sans text-sm'>{user.permission}</h6>
+                                                            </div>
+                                                        </>
+                                                    )
+                                                }
                                             </div>
                                         </div>
                                     ))
@@ -402,7 +501,7 @@ function ShareCard({ fileFolderID }: props) {
                     </DialogContent>
                 </form>
             </Dialog>
-           
+
         </div>
     )
 }
