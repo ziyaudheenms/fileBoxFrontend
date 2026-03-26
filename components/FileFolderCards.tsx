@@ -51,7 +51,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                             </div>
                                         </Link>
                                     ) : (
-                                        <Link href={`http://localhost:3000/images/${item.id}`} >
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `http://localhost:3000/images/${item.id}` } >
                                             <div className={`h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden`}>
                                                 {
                                                     item.upload_status == 'PENDING' || item.upload_status == 'PROCESSING' || item.upload_status == 'FAILED' ? (

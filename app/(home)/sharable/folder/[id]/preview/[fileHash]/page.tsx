@@ -168,7 +168,6 @@ function page() {
     const canShare = ['ADMIN', 'OWNER'].includes(userPermission);
     const canDelete = ['OWNER'].includes(userPermission);
 
-
     return (
         <div>
             <Navbar />

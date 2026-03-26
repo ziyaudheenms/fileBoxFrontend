@@ -10,22 +10,45 @@ const chunkSize = 1024 * 1024 * 2;
 
 interface FileUploadProps {
     isRoot: boolean;
-    folderID?: string;
+    folderID?: string | undefined;
+    shareUUID?: string | undefined;
+    parentHash?: string | undefined;
+
 
 }
 
-function FileUpload({ isRoot, folderID }: FileUploadProps) {
+function FileUpload({ isRoot, folderID , shareUUID , parentHash }: FileUploadProps) {
     const { getToken } = useAuth()
     const [upLoading, setUpLoading] = useState<Boolean | false>(false)
     const inputRef = useRef<HTMLInputElement>(null);
     const [progress, setProgress] = useState(0)
     const [fileID, setFileID] = useState("")
     const router = useRouter()
-    let APIENDPOINT = ""
+
     let APIENDPOINTFORCHUNKED = ""
 
-    !isRoot ? APIENDPOINT = "http://127.0.0.1:8000/api/v1/Create/Image/" : APIENDPOINT = `http://127.0.0.1:8000/api/v1/Create/Image/?folderID=${folderID}`
-    !isRoot ? APIENDPOINTFORCHUNKED = "http://127.0.0.1:8000/api/v1/Create/Image/Chunk/Join/" : APIENDPOINTFORCHUNKED = `http://127.0.0.1:8000/api/v1/Create/Image/Chunk/Join/?folderID=${folderID}`
+    let APIURL =  `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/Create/Image/`
+
+    const params = new URLSearchParams();
+
+    if (folderID) {
+        params.append('folderID' , folderID)
+    }
+
+    if (shareUUID) {
+        params.append("sharableUUID" , shareUUID)
+    }
+
+    if (parentHash) {
+        params.append("parentHash" , parentHash)
+    }
+
+    const queryString = params.toString()
+
+    let APIENDPOINT = queryString ? `${APIURL}?${queryString}` : APIURL;
+
+    // !isRoot ? APIENDPOINT = "http://127.0.0.1:8000/api/v1/Create/Image/" : APIENDPOINT = `http://127.0.0.1:8000/api/v1/Create/Image/?folderID=${folderID}`
+    // !isRoot ? APIENDPOINTFORCHUNKED = "http://127.0.0.1:8000/api/v1/Create/Image/Chunk/Join/" : APIENDPOINTFORCHUNKED = `http://127.0.0.1:8000/api/v1/Create/Image/Chunk/Join/?folderID=${folderID}`
 
     const chunkUploader = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setUpLoading(true)
@@ -50,7 +73,18 @@ function FileUpload({ isRoot, folderID }: FileUploadProps) {
                     }).then((res) => {
                         console.log(res);
                         if (res.data.status_code === 5000) {
-                            router.push(`/images/${res.data.data}`)
+                            if (shareUUID != null) {
+                                if (parentHash != null) {
+                                    // http://localhost:3000/sharable/folder/8e11a9ef-99b9-447b-9efd-18fc7a516657/kpB4Aqe3
+                                    router.push(`/preview/${res.data.data}`)
+                                }
+                                else {
+                                    router.push(`sharable/folder/${shareUUID}/${res.data.data}`)
+                                }
+                            }
+                            else {
+                                router.push(`/images/${res.data.data}`) // Redirecting for the actual users.........
+                            }
                             toast.success("File Successfully Added to Queue")
                         } else {
                             toast.error("oops! Some error have happened")
@@ -61,6 +95,9 @@ function FileUpload({ isRoot, folderID }: FileUploadProps) {
                     }).finally(() => {
                         setUpLoading(false);
                     })
+
+
+
                 } else {
                     const totalChunks = Math.ceil(file.size / chunkSize)
                     const fileID = crypto.randomUUID()

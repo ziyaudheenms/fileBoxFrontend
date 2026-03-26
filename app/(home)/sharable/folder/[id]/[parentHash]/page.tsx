@@ -404,7 +404,7 @@ function page() {
                     {
                         canEdit ? (
                             <div className='flex flex-col gap-2'>
-                                <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
+                                <FileUpload isRoot={true} shareUUID={params.id ? params.id as string: undefined} parentHash={params.parentHash ? params.parentHash as string:undefined} />
                                 <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                             </div>
 
