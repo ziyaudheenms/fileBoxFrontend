@@ -12,23 +12,38 @@ import { useRouter } from 'next/navigation'
 interface FolderCreateProps {
   isRoot: boolean;
   folderID?: string;
+  shareUUID?: string;
+  parentHash?: string;
 }
 
-function CreateFolder({ isRoot, folderID }: FolderCreateProps) {
+function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateProps) {
   const { getToken } = useAuth()
   const [upLoading, setUpLoading] = useState<Boolean | false>(false)
   const [folderName, setFolderName] = useState("")
   const [progress, setProgress] = useState(0)
   const router = useRouter()
 
-  let APIENDPOINT = ""
 
-  if (folderID === undefined) {
-    APIENDPOINT = "http://127.0.0.1:8000/api/v1/Create/Folder/"
+  let APIURL = `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/Create/Folder/`
+
+  const params = new URLSearchParams();
+
+  if (folderID) {
+    params.append('folderID', folderID)
   }
-  else {
-    APIENDPOINT = `http://127.0.0.1:8000/api/v1/Create/Folder/?folderID=${folderID}`
+
+  if (shareUUID) {
+    params.append("sharableUUID", shareUUID)
   }
+
+  if (parentHash) {
+    params.append("parentHash", parentHash)
+  }
+
+  const queryString = params.toString()
+
+  let APIENDPOINT = queryString ? `${APIURL}?${queryString}` : APIURL;
+
 
   const handleCreateFolder = async (e: any) => {
     e.preventDefault()
@@ -52,9 +67,18 @@ function CreateFolder({ isRoot, folderID }: FolderCreateProps) {
 
         if (res.data.status_code == 5000) {
           toast.success("Folder Successfully Created")
-         
-
-          isRoot ? router.push(`dashboard/${res.data.data}`) : router.push(`dashboard/${res.data.data}`)
+          if (shareUUID) {
+            if (parentHash) {
+              //            http://localhost:3000/sharable/folder/8e11a9ef-99b9-447b-9efd-18fc7a516657/kpB4Aqe3
+              router.push(`sharable/folder/${shareUUID}/${res.data.data}`)
+            }
+            else {
+              router.push(`${shareUUID}/${res.data.data}`)
+            }
+          }
+          else {
+            router.push(`dashboard/${res.data.data}`) // Redirecting for the actual users.........
+          }
         }
         else if (res.data.status_code == 4001) {
           toast.success("Folder Creation Failed: Folder with Same Name Already Exists")

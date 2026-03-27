@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { IconDotsVertical, IconFileStar, IconFolder, IconTrash } from '@tabler/icons-react';
 import ImageProcessing from './ImageProcessing';
 import Image from 'next/image'; // Add this line
-
+import { useUser } from '@clerk/nextjs';
+import FileFolderBadge from './FileFolderBadge';
 interface FileFolderProps {
     id: number;
     author: string;
@@ -22,6 +23,7 @@ interface FileFolderProps {
     celery_task_ID: string | null;
     is_trash: boolean;
     is_favorite: boolean;
+    profile_image: string
 }
 
 interface Props {
@@ -35,24 +37,45 @@ interface Props {
     shareUUID? :string;
 }
 
+
+
 function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, onHandleFavoriteUpdation, isTrashPage, isFavoritePage , isShared , shareUUID }: Props) {
+    const { isSignedIn, user, isLoaded } = useUser();
     return (
         <div>
             {
                 isGridLayout ? (
                     <div className="grid grid-cols-4 gap-4 py-5 ">
                         {folderFileData.map((item) => (
-                            <div key={item.id} className='border border-neutral-800 rounded-lg hover:border-neutral-700 '>
+                            <div key={item.id} className='border border-neutral-800 rounded-lg hover:border-neutral-700 relative'>
                                 {
                                     item.isfolder ? (
                                         <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`}>
+                                            {
+                                                    item.author == user?.username ? (
+                                                        <div></div>
+                                                    ) : (
+                                                        <div className='absolute top-3 right-1'>
+                                                        <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
+                                                        </div>
+                                                    )
+                                                }
                                             <div className='h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
                                                 <IconFolder stroke={2} height={90} width={90} className='text-neutral-400' />
                                             </div>
                                         </Link>
                                     ) : (
                                         <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `http://localhost:3000/images/${item.id}` } >
-                                            <div className={`h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden`}>
+                                            <div className={`h-40 bg-zinc-900 flex flex-col items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden relative`}>
+                                                {
+                                                    item.author == user?.username ? (
+                                                        <div></div>
+                                                    ) : (
+                                                        <div className='absolute top-3 right-1'>
+                                                        <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
+                                                        </div>
+                                                    )
+                                                }
                                                 {
                                                     item.upload_status == 'PENDING' || item.upload_status == 'PROCESSING' || item.upload_status == 'FAILED' ? (
                                                         <ImageProcessing parent='dashboard' />
