@@ -7,6 +7,7 @@ import ImageProcessing from './ImageProcessing';
 import Image from 'next/image'; // Add this line
 import { useUser } from '@clerk/nextjs';
 import FileFolderBadge from './FileFolderBadge';
+import DeleteButton from './DeleteButton';
 interface FileFolderProps {
     id: number;
     author: string;
@@ -134,7 +135,11 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                             <IconTrash stroke={2} className='text-neutral-500' />
                                                         </DropdownMenuShortcut>
                                                     </DropdownMenuItem>
+                                                    <DropdownMenuItem>
+                                                        <DeleteButton fileFolderID={shareUUID ? undefined :String(item.id)} shareUUID={shareUUID ? shareUUID :undefined} fileFolderHash={isShared ? String(item.id) :undefined} isDropDown={true}/>
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuGroup>
+                                                
 
                                             </DropdownMenuContent>
                                         </DropdownMenu>

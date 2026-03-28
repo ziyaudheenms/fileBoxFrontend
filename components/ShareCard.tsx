@@ -47,15 +47,15 @@ interface permissionUserProps {
 
 interface props {
     fileFolderID?: number
-    type: string
-    isShared : boolean
-    fileHash? : string
-    parentHash? : string | null
-    UUID? : string | null
+    type: string;
+    isShared : boolean;
+    childSharableHash? : string | null;
+    UUID? : string | null;
+    isOwner? : boolean;
 }
 
 
-function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHash}: props) {
+function ShareCard({ fileFolderID, type , isShared  , UUID , childSharableHash , isOwner}: props) {
 
     const { user } = useUser()
     const { getToken } = useAuth()
@@ -71,6 +71,33 @@ function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHas
     const [editingMode, setEditiongMode] = useState<Boolean>(false)
     const [updatePermissionChoice, setupdatePermissionChoice] = useState('') // this state is used to store the updated permission choice for the user whose permission we want to update.
     const [userToBeRemoved, setUserToBeRemoved] = useState<permissionUserProps[]>([]) // this state is used to store the user which we want to remove from the list of users with permission.
+
+    let apiUrlForGettingPermittedUsers = `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/permission/Users`
+    let apiUrlForAssiginigPermission = `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/permission/grandUsers`
+
+    const params = new URLSearchParams();
+
+    if (fileFolderID) {
+        let fileFolder_ID = `${fileFolderID}`
+        params.append('fileFolderID', fileFolder_ID) 
+    }
+
+    if (UUID) {
+        params.append("sharableUUID", UUID)
+    }
+
+    if (childSharableHash) {
+        params.append("childSharableHash", childSharableHash)
+    }
+
+    const queryString = params.toString()
+
+    let APIENDPOINT_FOR_GETTING_ASSIGNED_USERS = queryString ? `${apiUrlForGettingPermittedUsers}?${queryString}` : apiUrlForGettingPermittedUsers;
+    let APIENDPOINT_FOR_ASSIGING_PERMISSION = queryString ? `${apiUrlForAssiginigPermission}?${queryString}` : apiUrlForAssiginigPermission;
+
+
+
+
 
     const getTheUserForAssigningPermission = async () => {
         const jwtToken = await getToken()
@@ -121,7 +148,7 @@ function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHas
         setpermissionLoader(true)
         const jwtToken = await getToken()
         axios
-            .get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/permission/Users?fileFolderID=${fileFolderID}`, {
+            .get(APIENDPOINT_FOR_GETTING_ASSIGNED_USERS, {
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
                 },
@@ -133,7 +160,7 @@ function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHas
                     toast.success(res.data.message)
                     setpermissionLoader(false)
                 }
-                else if (res.data.status_code == 5002) {
+                else if (res.data.status_code == 5001) {
                     toast.error(res.data.message)
                 }
                 else if (res.data.status_code == 4001) {
@@ -173,7 +200,7 @@ function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHas
         console.log("entered into the function")
         const jwtToken = await getToken()
         axios.post(
-            `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/permission/grandUsers?fileFolderID=${fileFolderID}`,
+            APIENDPOINT_FOR_ASSIGING_PERMISSION,
             {
                 'usersToGrandPermission': userToBeAssigned,
                 'usersToRemovePermission': userToBeRemoved,
@@ -303,9 +330,12 @@ function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHas
                                 value={permissionChoice}
                                 onChange={(e) => setPermissionChoice(e.target.value)}
                             >
+                                
                                 <option value="VIEW">View</option>
                                 <option value="EDIT">Edit</option>
-                                <option value="ADMIN">Admin</option>
+                                {
+                                    isOwner ? <option value="ADMIN">Admin</option> : null
+                                }
                             </select>
 
 
@@ -353,12 +383,18 @@ function ShareCard({ fileFolderID, type , isShared , fileHash , UUID , parentHas
 
                                 {/* edit button */}
                                 {
-
+                                    isOwner ? (
+                                         <div className="text-neutral-100 flex items-center gap-1 py-1 px-3 rounded-sm bg-neutral-900" onClick={() => setEditiongMode(!editingMode)}>
+                                            <IconEdit stroke={1} className="h-5 w-5" />
+                                            <h5 className="text-neutral-400 font-sans text-sm font-light">Edit</h5>
+                                        </div>
+                                    ) : (
+                                        <div></div>
+                                    )
                                 }
-                                <div className="text-neutral-100 flex items-center gap-1 py-1 px-3 rounded-sm bg-neutral-900" onClick={() => setEditiongMode(!editingMode)}>
-                                    <IconEdit stroke={1} className="h-5 w-5" />
-                                    <h5 className="text-neutral-400 font-sans text-sm font-light">Edit</h5>
-                                </div>
+
+
+                               
 
                             </div>
                             <div className='w-full gap-3 overflow-y-scroll h-24 no-scrollbar'>

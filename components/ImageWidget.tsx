@@ -108,7 +108,7 @@ function ImageWidget({isPreview , fileHash , sharableUUID , userPermission , fil
                                     {
                                         canShare ? (
                                             <>
-                                                <ShareCard fileHash={fileHash} type={'image'} isShared={true}/>
+                                                <ShareCard UUID={sharableUUID} childSharableHash={fileHash} type={'image'} isShared={true} isOwner={canDelete}/> //if can delete is true that means its owner
                                                 {
                                                     canDelete ? (
                                                         <Button className='w-[30%] bg-neutral-950 border border-neutral-800 hover:bg-red-600'>

@@ -365,7 +365,7 @@ function page() {
 
                     {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
 
-                    <FileFolderCards folderFileData={FileFolderData} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false} onHandleFavoriteUpdation={HandleFavoriteUpdation} onHandleTrashUpdation={HandleTrashUpdation} isShared={true} shareUUID={params.id ? params.id as string : undefined}/>
+                    <FileFolderCards folderFileData={FileFolderData} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false} onHandleFavoriteUpdation={HandleFavoriteUpdation} onHandleTrashUpdation={HandleTrashUpdation} isShared={true} shareUUID={params.id ? params.id as string : undefined} />
 
                     {
                         empty ? (
@@ -414,7 +414,7 @@ function page() {
                     }
                     {
                         canShare ? (
-                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'}  parentHash={params.parentHash ? params.id as string : null} isShared={true}/>
+                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'}  childSharableHash={params.parentHash ? params.parentHash as string : null} isShared={true} isOwner={canDelete}/> // canDelete if true that means its owner
 
                         ) : (
                             <div></div>

@@ -423,7 +423,7 @@ function page() {
                     }
                     {
                         canShare ? (
-                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'} isShared={true}/>
+                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'} isShared={true} isOwner={canDelete}/>
                         ) : (
                             <div></div>
                         )

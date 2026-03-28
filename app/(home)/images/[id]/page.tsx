@@ -33,6 +33,7 @@ import { Link2, SearchIcon, User2 } from 'lucide-react'
 import { useUser } from '@clerk/nextjs' // this import is to get the important details about the current logged in user.
 import { ButtonGroup } from '@/components/ui/button-group'
 import ShareCard from '@/components/ShareCard'
+import DeleteButton from '@/components/DeleteButton'
 
 // Custom function to get relative time based on the DATE object.
 function getRelativeTime(date: Date | string | undefined): string {
@@ -427,9 +428,7 @@ function page() {
                                         <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconDownload stroke={2} height={30} width={30} className='text-lg' />Download</Button>
                                         <div className='w-full py-2 flex items-center gap-2 font-figtree'>
                                           <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={false}/>
-                                            <Button className='w-[30%] bg-neutral-950 border border-neutral-800 hover:bg-red-600'>
-                                                <IconCopyX stroke={2} className='text-red-900 ' height={30} width={30} />
-                                            </Button>
+                                            <DeleteButton fileFolderID={params.id ? params.id as string : undefined} isDropDown={false}/>
                                         </div>
                                     </div>
 

@@ -203,7 +203,9 @@ function page() {
                             </BreadcrumbList>
                         </Breadcrumb>
                 </div>
-                <div className='w-full px-2 py-2 h-screen overflow-y-scroll no-scrollbar'>
+                
+            </div>
+            <div className='w-full px-2 py-2 h-screen overflow-y-scroll no-scrollbar'>
                     
                     {
                         FileFolderData.type_of_file_folder == 'image' ? (
@@ -230,7 +232,6 @@ function page() {
                         )
                     }
                 </div>
-            </div>
         </div>
     )
 
