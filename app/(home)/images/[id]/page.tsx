@@ -34,6 +34,7 @@ import { useUser } from '@clerk/nextjs' // this import is to get the important d
 import { ButtonGroup } from '@/components/ui/button-group'
 import ShareCard from '@/components/ShareCard'
 import DeleteButton from '@/components/DeleteButton'
+import MoveCard from '@/components/MoveCard'
 
 // Custom function to get relative time based on the DATE object.
 function getRelativeTime(date: Date | string | undefined): string {
@@ -470,6 +471,9 @@ function page() {
                                     </div>
 
                                 </div>
+                                    <MoveCard />
+
+                             
 
                             </div>
                         </div>
