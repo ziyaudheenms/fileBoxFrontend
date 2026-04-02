@@ -28,6 +28,8 @@ import {
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import ShareCard from '@/components/ShareCard'
+import MoveCard from '@/components/MoveOrCopyCard'
+import MoveOrCopyCard from '@/components/MoveOrCopyCard'
 
 interface FileFolderProps {
     id: number;
@@ -347,6 +349,7 @@ function page() {
                     <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                     <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                     <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false}/>
+                    <MoveOrCopyCard sourceID={params.id ? params.id[params.id.length - 1] as string : ""} type={'folder'}/>
                 </div>
             </div>
         </div>
