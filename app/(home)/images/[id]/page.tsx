@@ -472,7 +472,7 @@ function page() {
                                     </div>
 
                                 </div>
-                                <MoveOrCopyCard sourceID={params.id ? params.id as string : ""} type={'file'}/>
+                                <MoveOrCopyCard sourceID={params.id ? params.id as string : ""} type={'file'} isShared={false}/>
 
                              
 

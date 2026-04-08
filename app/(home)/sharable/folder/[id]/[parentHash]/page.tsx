@@ -26,6 +26,7 @@ import {
 import ShareCard from '@/components/ShareCard'
 import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData'
 import SharableError from '@/components/SharableError'
+import MoveOrCopyCard from '@/components/MoveOrCopyCard'
 
 interface FileFolderProps {
     id: number;
@@ -406,6 +407,7 @@ function page() {
                             <div className='flex flex-col gap-2'>
                                 <FileUpload isRoot={true} shareUUID={params.id ? params.id as string: undefined} parentHash={params.parentHash ? params.parentHash as string:undefined} />
                                 <CreateFolder isRoot={false} shareUUID={params.id ? params.id as string: undefined} parentHash={params.parentHash ? params.parentHash as string:undefined} />
+                                <MoveOrCopyCard isShared={true} sharableUUID={params.id ? params.id as string: undefined}  sourceID={params.parentHash ? params.parentHash as string: undefined} type={'folder'} />
                             </div>
 
                         ) : (

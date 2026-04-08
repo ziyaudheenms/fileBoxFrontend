@@ -32,11 +32,13 @@ interface fileFolderTree {
     updated_at: string;
 }
 
-function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: string | null }) {
+function MoveOrCopyCard({ sourceID, type, isShared, sharableUUID }: { sourceID: string | undefined, type: string, isShared: boolean, sharableUUID?: string }) {
 
     const { user } = useUser()
     const { getToken } = useAuth()
     const [loading, setLoading] = useState(false)
+    const [makeRootLoading, setmakeRootLoading] = useState(false)
+    const [listDirectoryLoading, setlistDirectoryLoading] = useState(false)
     const [empty, setEmpty] = useState(false)
     const [breadCrum, setBreadCrum] = useState<BreadCrumProps[]>([])
     const [fileFolderTree, setfileFolderTree] = useState<fileFolderTree[]>()  //used to store the array of users which are going to get the permission in the format -> emial:permissionChoice
@@ -54,7 +56,7 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
         else {
             APIENDPOINT = apiUrl
         }
-        setLoading(true)
+        setlistDirectoryLoading(true)
         setBreadCrum([]) // Clear breadcrumb state before fetching new data
         const jwtToken = await getToken()
         // GET Request that is used to fetch all the folder/file data
@@ -88,7 +90,7 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
                 toast.error("Error fetching data")
             })
             .finally(() => {
-                setLoading(false)
+                setlistDirectoryLoading(false)
             })
     }
 
@@ -146,7 +148,6 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
 
 
     const HandleCopyOperation = async (isRoot: boolean) => {
-        setLoading(true)
         let url = `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/copy/`
         let APIENDPOINT = ''
         console.log("sourceID: ", sourceID)
@@ -154,9 +155,10 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
 
         if (isRoot) {
             APIENDPOINT = `${url}?sourceRecordHashedID=${sourceID}`
+            setmakeRootLoading(true)
         }
         else {
-
+            setLoading(true)
             const params = new URLSearchParams();
 
             if (hashedFolderID) {
@@ -165,6 +167,10 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
 
             if (sourceID) {
                 params.append("sourceRecordHashedID", sourceID)
+            }
+
+            if (sharableUUID) {
+                params.append("sharableUUID", sharableUUID)
             }
 
             const queryString = params.toString()
@@ -181,14 +187,21 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
                 }
             })
             .then((res) => {
+
                 console.log(res.data)
-                router.push('/dashboard')
+                if (res.data.status_code === 5000) {
+                    router.push('/dashboard')
+                }
+                else{
+                    toast.error(res.data.message)
+                }
             })
             .catch((error) => {
                 toast.error("Error fetching data")
             })
             .finally(() => {
                 setLoading(false)
+                setmakeRootLoading(false)
             })
     }
 
@@ -203,20 +216,49 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
             <Dialog>
                 <form className='w-full'>
                     <DialogTrigger asChild>
-                        <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'>
-                            <IconCopy stroke={2} />Move</Button>
+                        {
+                            isShared ? (
+                                <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'><IconCopy stroke={2} />Make A Copy</Button>
+
+                            ) : (
+                                <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'><IconCopy stroke={2} />Move / Copy</Button>
+
+                            )
+                        }
+
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-sm bg-neutral-950 border-2 border-neutral-800 text-nwutra">
                         <DialogHeader>
                             <div className="w-full rounded-md text-neutral-400 flex items-center hover:cursor-pointer">
-                                <div className={`w-[50%] text-center ${moveOrCopy == 'MOVE' ? 'bg-neutral-300' : 'bg-neutral-900'} p-1 rounded-md ${moveOrCopy == 'MOVE' ? 'text-black' : 'text-neutral-100'}` } onClick={() => {
-                                    setMoveOrCopy('MOVE')
-                                }}>MOVE</div>
-                                <div className={`w-[50%] text-center ${moveOrCopy == 'COPY' ? 'bg-neutral-300' : 'bg-neutral-900'} p-1 rounded-md ${moveOrCopy == 'COPY' ? 'text-black' : 'text-neutral-100'} ` } onClick={() => {
-                                    setMoveOrCopy('COPY')
-                                }}>COPY</div>
+                                {
+                                    isShared ? (
+                                        <div></div>
+                                    ) : (
+                                        <>
+                                            <div className={`w-[50%] text-center ${moveOrCopy == 'MOVE' ? 'bg-neutral-300' : 'bg-neutral-900'} p-1 rounded-md ${moveOrCopy == 'MOVE' ? 'text-black' : 'text-neutral-100'}`} onClick={() => {
+                                                setMoveOrCopy('MOVE')
+                                            }}>MOVE</div>
+                                            <div className={`w-[50%] text-center ${moveOrCopy == 'COPY' ? 'bg-neutral-300' : 'bg-neutral-900'} p-1 rounded-md ${moveOrCopy == 'COPY' ? 'text-black' : 'text-neutral-100'} `} onClick={() => {
+                                                setMoveOrCopy('COPY')
+                                            }}>COPY</div>
+                                        </>
+                                    )
+                                }
+
+
                             </div>
-                            <DialogTitle className='text-neutral-400'>Move Item</DialogTitle>
+                            {
+                                isShared ? (
+                                    <DialogTitle className='text-neutral-400'>
+                                        Make Your Copy
+                                    </DialogTitle>
+                                ) : (
+                                    <DialogTitle className='text-neutral-400'>
+                                        Move Item
+                                    </DialogTitle>
+                                )
+                            }
+
                             <DialogDescription>
                                 Decide where to move the item as you like.
                             </DialogDescription>
@@ -264,7 +306,7 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
                                     </div>
                                 </div>
                                 {
-                                    loading ? (
+                                    listDirectoryLoading ? (
                                         <InfiniteLoader />
                                     ) :
                                         (
@@ -315,7 +357,7 @@ function MoveOrCopyCard({ sourceID, type }: { sourceID: string | null, type: str
                                 HandleCopyOperation(true)
                             }
                         }}>
-                            {loading ? <IconLoader /> : <IconSquareCheck stroke={2} className="text-green-600" />}
+                            {makeRootLoading ? <IconLoader /> : <IconSquareCheck stroke={2} className="text-green-600" />}
                             <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap text-sm">make it root</span>
                         </div>
 

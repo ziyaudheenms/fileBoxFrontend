@@ -348,8 +348,8 @@ function page() {
                     {/*UPLOAD OPTIONS */}
                     <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                     <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
-                    <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false}/>
-                    <MoveOrCopyCard sourceID={params.id ? params.id[params.id.length - 1] as string : ""} type={'folder'}/>
+                    <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false} isOwner={true}/>
+                    <MoveOrCopyCard sourceID={params.id ? params.id[params.id.length - 1] as string : ""} type={'folder'} isShared={false}/>
                 </div>
             </div>
         </div>

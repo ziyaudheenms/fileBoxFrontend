@@ -6,6 +6,7 @@ import { IconCopyX, IconDownload, IconPencilCheck, IconUser } from '@tabler/icon
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import ShareCard from '@/components/ShareCard';
+import MoveOrCopyCard from './MoveOrCopyCard';
 
 
 interface FileFolderProps {
@@ -148,7 +149,7 @@ function ImageWidget({isPreview , fileHash , sharableUUID , userPermission , fil
                                         <div className='w-full py-2'>
                                             <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconUser stroke={2} height={30} width={30} className='text-lg' />Rename</Button>
                                         </div>
-
+                                        
                                     </div>
                                     <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
                                         <div className='flex flex-col gap-2'>
@@ -168,6 +169,9 @@ function ImageWidget({isPreview , fileHash , sharableUUID , userPermission , fil
                                         </div>
 
                                     </div>
+
+                                        <MoveOrCopyCard sourceID={fileHash} type={'file'} isShared={true} sharableUUID={sharableUUID}/>
+
                                 </>
                             ) : (
                                 <div></div>

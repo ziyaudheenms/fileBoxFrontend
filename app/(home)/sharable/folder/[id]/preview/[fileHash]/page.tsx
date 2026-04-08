@@ -163,7 +163,7 @@ function page() {
         )
     }
 
-    console.log("USER PERMISSION FOR THIS SHARABLE LINK IS ", userPermission)
+    
     const canEdit = ['EDIT', 'ADMIN', 'OWNER'].includes(userPermission);
     const canShare = ['ADMIN', 'OWNER'].includes(userPermission);
     const canDelete = ['OWNER'].includes(userPermission);
