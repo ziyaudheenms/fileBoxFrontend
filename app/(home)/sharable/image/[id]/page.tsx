@@ -7,15 +7,15 @@ import { useAuth } from '@clerk/nextjs';
 import InfiniteLoader from '@/components/InfiniteLoader';
 import ImageProcessing from '@/components/ImageProcessing';
 import Image from 'next/image';
-import { IconCopyX, IconDownload, IconLink, IconPencilCheck, IconShare, IconUser } from '@tabler/icons-react';
+import { IconCopyX, IconPencilCheck, IconUser } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
-import { User2 } from 'lucide-react';
 import { toast } from 'sonner';
 import SharableError from '@/components/SharableError';
 import ShareCard from '@/components/ShareCard';
 import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData';
 import Download from '@/components/Download';
+import UpdateMetaData from '@/components/UpdateMetaData';
 
 interface FileFolderProps {
     id: number;
@@ -212,42 +212,7 @@ function page() {
                         {
                             canEdit ? (
                                 <>
-                                    <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
-                                        <div className='flex flex-col gap-2'>
-                                            <div className='font-sans flex flex-col gap-1'>
-                                                <h5 className='text-neutral-400'>Rename</h5>
-                                                <InputGroup>
-                                                    <InputGroupInput placeholder="Rename the file" className="text-neutral-100 w-[7000px]" />
-                                                    <InputGroupAddon>
-                                                        <IconUser />
-                                                    </InputGroupAddon>
-                                                </InputGroup>
-                                            </div>
-                                        </div>
-
-                                        <div className='w-full py-2'>
-                                            <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconUser stroke={2} height={30} width={30} className='text-lg' />Rename</Button>
-                                        </div>
-
-                                    </div>
-                                    <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
-                                        <div className='flex flex-col gap-2'>
-                                            <div className='font-sans flex flex-col gap-1'>
-                                                <h5 className='text-neutral-400'>Add Description</h5>
-                                                <InputGroup>
-                                                    <InputGroupInput placeholder="Rename the file" className="text-neutral-100 w-[7000px]" />
-                                                    <InputGroupAddon>
-                                                        <IconPencilCheck />
-                                                    </InputGroupAddon>
-                                                </InputGroup>
-                                            </div>
-                                        </div>
-
-                                        <div className='w-full py-2'>
-                                            <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconPencilCheck stroke={2} height={30} width={30} className='text-lg' />Rename</Button>
-                                        </div>
-
-                                    </div>
+                                    <UpdateMetaData sharableUUID={params.id ? params.id as string: undefined}/>
                                 </>
                             ) : (
                                 <div></div>

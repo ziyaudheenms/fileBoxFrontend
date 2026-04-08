@@ -8,6 +8,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import ShareCard from '@/components/ShareCard';
 import MoveOrCopyCard from './MoveOrCopyCard';
 import Download from './Download';
+import UpdateMetaData from './UpdateMetaData';
 
 interface FileFolderProps {
     id: number;
@@ -133,44 +134,8 @@ function ImageWidget({isPreview , fileHash , sharableUUID , userPermission , fil
                         {
                             canEdit ? (
                                 <>
-                                    <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
-                                        <div className='flex flex-col gap-2'>
-                                            <div className='font-sans flex flex-col gap-1'>
-                                                <h5 className='text-neutral-400'>Rename</h5>
-                                                <InputGroup>
-                                                    <InputGroupInput placeholder="Rename the file" className="text-neutral-100 w-[7000px]" />
-                                                    <InputGroupAddon>
-                                                        <IconUser />
-                                                    </InputGroupAddon>
-                                                </InputGroup>
-                                            </div>
-                                        </div>
-
-                                        <div className='w-full py-2'>
-                                            <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconUser stroke={2} height={30} width={30} className='text-lg' />Rename</Button>
-                                        </div>
-                                        
-                                    </div>
-                                    <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
-                                        <div className='flex flex-col gap-2'>
-                                            <div className='font-sans flex flex-col gap-1'>
-                                                <h5 className='text-neutral-400'>Add Description</h5>
-                                                <InputGroup>
-                                                    <InputGroupInput placeholder="Rename the file" className="text-neutral-100 w-[7000px]" />
-                                                    <InputGroupAddon>
-                                                        <IconPencilCheck />
-                                                    </InputGroupAddon>
-                                                </InputGroup>
-                                            </div>
-                                        </div>
-
-                                        <div className='w-full py-2'>
-                                            <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconPencilCheck stroke={2} height={30} width={30} className='text-lg' />Rename</Button>
-                                        </div>
-
-                                    </div>
-
-                                        <MoveOrCopyCard sourceID={fileHash} type={'file'} isShared={true} sharableUUID={sharableUUID}/>
+                                    <UpdateMetaData fileHash={fileHash} sharableUUID={sharableUUID}/>
+                                    <MoveOrCopyCard sourceID={fileHash} type={'file'} isShared={true} sharableUUID={sharableUUID}/>
 
                                 </>
                             ) : (

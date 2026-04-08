@@ -37,6 +37,7 @@ import DeleteButton from '@/components/DeleteButton'
 import MoveCard from '@/components/MoveOrCopyCard'
 import MoveOrCopyCard from '@/components/MoveOrCopyCard'
 import Download from '@/components/Download'
+import UpdateMetaData from '@/components/UpdateMetaData'
 
 // Custom function to get relative time based on the DATE object.
 function getRelativeTime(date: Date | string | undefined): string {
@@ -194,7 +195,7 @@ function page() {
                 else if (res.data.status_code == 4001) {
                     toast.error("user not found !")
                 }
-               
+
             })
             .catch((err) => {
                 toast.error("some error occured !")
@@ -240,8 +241,8 @@ function page() {
         const jwtToken = await getToken()
         axios
             .post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharableLink?fileFolderID=${params.id ? params.id as string : undefined}&type=image`, {
-                "access_type" : isPublic? 'PUBLIC' : 'PRIVATE'
-            } , {
+                "access_type": isPublic ? 'PUBLIC' : 'PRIVATE'
+            }, {
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
                 },
@@ -428,16 +429,16 @@ function page() {
                                     </div>
 
                                     <div className='w-full pb-2 pt-5 border-t-2 border-t-neutral-800'>
-                                        <Download fileName={folderFileData.name} fileUrl={folderFileData.file_url}/>
+                                        <Download fileName={folderFileData.name} fileUrl={folderFileData.file_url} />
                                         <div className='w-full py-2 flex items-center gap-2 font-figtree'>
-                                          <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={false}/>
-                                            <DeleteButton fileFolderID={params.id ? params.id as string : undefined} isDropDown={false}/>
+                                            <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={false} />
+                                            <DeleteButton fileFolderID={params.id ? params.id as string : undefined} isDropDown={false} />
                                         </div>
                                     </div>
 
                                 </div>
 
-                                <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
+                                {/* <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
                                     <div className='flex flex-col gap-2'>
                                         <div className='font-sans flex flex-col gap-1'>
                                             <h5 className='text-neutral-400'>Rename</h5>
@@ -472,10 +473,13 @@ function page() {
                                         <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconPencilCheck stroke={2} height={30} width={30} className='text-lg' />Rename</Button>
                                     </div>
 
-                                </div>
-                                <MoveOrCopyCard sourceID={params.id ? params.id as string : ""} type={'file'} isShared={false}/>
+                                </div> */}
 
-                             
+                                <UpdateMetaData fileID={params.id ? params.id as string : ""}/>
+
+                                <MoveOrCopyCard sourceID={params.id ? params.id as string : ""} type={'file'} isShared={false} />
+
+
 
                             </div>
                         </div>
