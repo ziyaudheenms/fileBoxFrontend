@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import ShareCard from '@/components/ShareCard';
 import MoveOrCopyCard from './MoveOrCopyCard';
-
+import Download from './Download';
 
 interface FileFolderProps {
     id: number;
@@ -104,7 +104,7 @@ function ImageWidget({isPreview , fileHash , sharableUUID , userPermission , fil
                             </div>
 
                             <div className='w-full pb-2 pt-5 border-t-2 border-t-neutral-800'>
-                                <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconDownload stroke={2} height={30} width={30} className='text-lg' />Download</Button>
+                                <Download fileName={fileFolderData.name} fileUrl={fileFolderData.file_url} />
                                 <div className='w-full py-2 flex gap-2 font-figtree'>
                                     {
                                         canShare ? (

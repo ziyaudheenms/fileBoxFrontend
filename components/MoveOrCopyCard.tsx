@@ -205,12 +205,6 @@ function MoveOrCopyCard({ sourceID, type, isShared, sharableUUID }: { sourceID: 
             })
     }
 
-
-    useEffect(() => {
-        getAvailableFilesFolders(null)
-    }, [])
-
-
     return (
         <div className={` ${type == 'file' ? 'w-[80%]' : 'w-full'} py-2 flex gap-2 font-figtree`}>
             <Dialog>
@@ -218,7 +212,9 @@ function MoveOrCopyCard({ sourceID, type, isShared, sharableUUID }: { sourceID: 
                     <DialogTrigger asChild>
                         {
                             isShared ? (
-                                <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'><IconCopy stroke={2} />Make A Copy</Button>
+                                <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'><IconCopy stroke={2} onClick={() => {
+                                    getAvailableFilesFolders(null)
+                                }}/>Make A Copy</Button>
 
                             ) : (
                                 <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'><IconCopy stroke={2} />Move / Copy</Button>

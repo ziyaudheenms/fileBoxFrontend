@@ -36,6 +36,7 @@ import ShareCard from '@/components/ShareCard'
 import DeleteButton from '@/components/DeleteButton'
 import MoveCard from '@/components/MoveOrCopyCard'
 import MoveOrCopyCard from '@/components/MoveOrCopyCard'
+import Download from '@/components/Download'
 
 // Custom function to get relative time based on the DATE object.
 function getRelativeTime(date: Date | string | undefined): string {
@@ -427,7 +428,7 @@ function page() {
                                     </div>
 
                                     <div className='w-full pb-2 pt-5 border-t-2 border-t-neutral-800'>
-                                        <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconDownload stroke={2} height={30} width={30} className='text-lg' />Download</Button>
+                                        <Download fileName={folderFileData.name} fileUrl={folderFileData.file_url}/>
                                         <div className='w-full py-2 flex items-center gap-2 font-figtree'>
                                           <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={false}/>
                                             <DeleteButton fileFolderID={params.id ? params.id as string : undefined} isDropDown={false}/>

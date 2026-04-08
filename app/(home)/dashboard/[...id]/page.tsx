@@ -344,7 +344,6 @@ function page() {
                 {/* ADDITIONAL DETAILS RIGHT SECTION ALONG WITH UPLOAD OPTIONS */}
 
                 <div className='w-[27%] px-2 py-2 flex flex-col gap-3 h-screen overflow-y-scroll no-scrollbar'>
-
                     {/*UPLOAD OPTIONS */}
                     <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                     <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />

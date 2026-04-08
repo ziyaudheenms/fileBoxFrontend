@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import SharableError from '@/components/SharableError';
 import ShareCard from '@/components/ShareCard';
 import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData';
+import Download from '@/components/Download';
 
 interface FileFolderProps {
     id: number;
@@ -182,7 +183,7 @@ function page() {
                             </div>
 
                             <div className='w-full pb-2 pt-5 border-t-2 border-t-neutral-800'>
-                                <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100'> <IconDownload stroke={2} height={30} width={30} className='text-lg' />Download</Button>
+                                <Download fileName={folderFileData.name} fileUrl={folderFileData.file_url} />
                                 <div className='w-full py-2 flex gap-2 font-figtree'>
                                     {
                                         canShare ? (
