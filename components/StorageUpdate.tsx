@@ -16,7 +16,7 @@ interface StorageStatusProps {
 function StorageUpdate({ storageDetails }: { storageDetails: StorageStatusProps }) {
   return (
     <div>
-        <div className='border border-neutral-800 py-5 px-5 rounded-xl flex flex-col gap-4'>
+        <div className='border border-neutral-800 py-5 px-5 rounded-xl flex flex-col gap-4 bg-neutral-900/40'>
             <div className='flex items-center gap-2'>
               <div className='bg-neutral-800 p-2 rounded-lg '>
                 <IconServer stroke={2} height={25} width={25} className='text-neutral-400' />
@@ -31,7 +31,7 @@ function StorageUpdate({ storageDetails }: { storageDetails: StorageStatusProps 
               <div className='border-b-2 border-neutral-800'>
                 <div className='w-full h-2 bg-neutral-800 text-neutral-800 rounded-full'>
                   <div
-                    className='h-2 bg-neutral-100 text-neutral-800 rounded-full'
+                    className='h-2 bg-red-500 text-neutral-800 rounded-full'
                     style={{ width: `${storageDetails.storage_percentage_used}%` }}
                   ></div>
                 </div>

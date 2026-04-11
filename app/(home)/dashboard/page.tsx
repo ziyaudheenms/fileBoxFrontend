@@ -17,6 +17,7 @@ import { EmptyPage } from '@/components/EmptyPage'
 import FileFolderCards from '@/components/FileFolderCards'
 import RecentUploads from '@/components/RecentUploads'
 import StorageUpdate from '@/components/StorageUpdate'
+import SearchBar from '@/components/SearchBar'
 
 interface FileFolderProps {
   id: number;
@@ -242,12 +243,6 @@ function page() {
               <h4 className='text-neutral-100 font-sans'>Home</h4>
             </div>
             <div className='flex items-center gap-2'>
-              <InputGroup>
-                <InputGroupInput placeholder="Search..." className='placeholder:text-neutral-400  text-neutral-100' />
-                <InputGroupAddon>
-                  <SearchIcon />
-                </InputGroupAddon>
-              </InputGroup>
 
               {
                 gridLayout ? (
@@ -345,6 +340,7 @@ function page() {
         </div>
         {/* ADDITIONAL DETAILS RIGHT SECTION ALONG WITH UPLOAD OPTIONS */}
         <div className='w-[27%] px-2 py-2 flex flex-col gap-3 h-screen overflow-y-scroll no-scrollbar'>
+          <SearchBar />
 
           {/*CREATE FOLDER */}
           <CreateFolder isRoot={true} />

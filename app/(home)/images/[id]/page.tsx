@@ -475,7 +475,7 @@ function page() {
 
                                 </div> */}
 
-                                <UpdateMetaData fileID={params.id ? params.id as string : ""}/>
+                                <UpdateMetaData fileID={params.id ? params.id as string : ""} type='image'/>
 
                                 <MoveOrCopyCard sourceID={params.id ? params.id as string : ""} type={'file'} isShared={false} />
 

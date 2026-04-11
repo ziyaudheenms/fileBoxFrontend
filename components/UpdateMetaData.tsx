@@ -11,10 +11,11 @@ interface Props {
     fileID?: string,
     sharableUUID?: string,
     fileHash?: string,
+    type: string,
 }
 
 
-function UpdateMetaData({ fileID, sharableUUID, fileHash }: Props) {
+function UpdateMetaData({ fileID, sharableUUID, fileHash, type }: Props) {
     const [renameValue, setRenameValue] = useState<string | null>(null)
     const [descriptionValue, setDescriptionValue] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
@@ -81,7 +82,7 @@ function UpdateMetaData({ fileID, sharableUUID, fileHash }: Props) {
 
 
     return (
-        <div className='w-[80%]  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg gap-4'>
+        <div className={`${type === 'folder' ? 'w-full' : 'w-[80%]'}  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg gap-4`}>
             <div className='flex flex-col gap-2'>
                 <div className='font-sans flex flex-col gap-1'>
                     <h5 className='text-neutral-400'>Rename</h5>

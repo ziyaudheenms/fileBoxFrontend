@@ -30,6 +30,7 @@ import {
 import ShareCard from '@/components/ShareCard'
 import MoveCard from '@/components/MoveOrCopyCard'
 import MoveOrCopyCard from '@/components/MoveOrCopyCard'
+import UpdateMetaData from '@/components/UpdateMetaData'
 
 interface FileFolderProps {
     id: number;
@@ -349,6 +350,7 @@ function page() {
                     <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                     <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false} isOwner={true}/>
                     <MoveOrCopyCard sourceID={params.id ? params.id[params.id.length - 1] as string : ""} type={'folder'} isShared={false}/>
+                    <UpdateMetaData fileID={params.id ? params.id[params.id.length - 1] as string : undefined} type='folder'/>
                 </div>
             </div>
         </div>

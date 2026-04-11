@@ -34,13 +34,13 @@ interface Props {
     onHandleFavoriteUpdation: (fileFolderID: number) => void;
     isTrashPage: boolean;
     isFavoritePage: boolean;
-    isShared? : boolean;
-    shareUUID? :string;
+    isShared?: boolean;
+    shareUUID?: string;
 }
 
 
 
-function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, onHandleFavoriteUpdation, isTrashPage, isFavoritePage , isShared , shareUUID }: Props) {
+function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, onHandleFavoriteUpdation, isTrashPage, isFavoritePage, isShared, shareUUID }: Props) {
     const { isSignedIn, user, isLoaded } = useUser();
     return (
         <div>
@@ -48,32 +48,39 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                 isGridLayout ? (
                     <div className="grid grid-cols-4 gap-4 py-5 ">
                         {folderFileData.map((item) => (
-                            <div key={item.id} className='border border-neutral-800 rounded-lg hover:border-neutral-700 relative'>
+                            <div key={item.id} className='group relative bg-neutral-900/40 backdrop-blur-md
+             border border-neutral-800 rounded-lg 
+             hover:border-red-600/50 hover:bg-neutral-800/50
+             hover:-translate-y-1.5 
+             transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+             hover:shadow-[0_0_20px_rgba(220,38,38,0.15)]
+             cursor-pointer overflow-hidden'>
                                 {
                                     item.isfolder ? (
                                         <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`}>
                                             {
-                                                    item.author == user?.username ? (
-                                                        <div></div>
-                                                    ) : (
-                                                        <div className='absolute top-3 right-1'>
+                                                item.author == user?.username ? (
+                                                    <div></div>
+                                                ) : (
+                                                    <div className='absolute top-3 right-1'>
                                                         <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
-                                                        </div>
-                                                    )
-                                                }
+                                                    </div>
+                                                )
+                                            }
                                             <div className='h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
-                                                <IconFolder stroke={2} height={90} width={90} className='text-neutral-400' />
+                                                <IconFolder stroke={2} height={90} width={90} className='text-neutral-400 font-figtree group-hover:text-neutral-100' />
                                             </div>
                                         </Link>
                                     ) : (
-                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `http://localhost:3000/images/${item.id}` } >
-                                            <div className={`h-40 bg-zinc-900 flex flex-col items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden relative`}>
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `http://localhost:3000/images/${item.id}`} >
+                                            <div className={`h-40 bg-zinc-900 flex flex-col items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden relative group-hover:scale-110 transition-all duration-300 ease-out`}>
+
                                                 {
                                                     item.author == user?.username ? (
                                                         <div></div>
                                                     ) : (
                                                         <div className='absolute top-3 right-1'>
-                                                        <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
+                                                            <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
                                                         </div>
                                                     )
                                                 }
@@ -136,10 +143,10 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                         </DropdownMenuShortcut>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem>
-                                                        <DeleteButton fileFolderID={shareUUID ? undefined :String(item.id)} shareUUID={shareUUID ? shareUUID :undefined} fileFolderHash={isShared ? String(item.id) :undefined} isDropDown={true}/>
+                                                        <DeleteButton fileFolderID={shareUUID ? undefined : String(item.id)} shareUUID={shareUUID ? shareUUID : undefined} fileFolderHash={isShared ? String(item.id) : undefined} isDropDown={true} />
                                                     </DropdownMenuItem>
                                                 </DropdownMenuGroup>
-                                                
+
 
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -220,7 +227,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                     </DropdownMenuItem>
                                                 </DropdownMenuGroup>
 
-                                            </DropdownMenuContent>  
+                                            </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
                                 </div>
