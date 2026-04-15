@@ -33,7 +33,11 @@ interface SearchResult {
     isfolder: boolean;
 }
 
-function SearchBar() {
+interface props {
+    scope? : string
+}
+
+function SearchBar({scope} : props) {
     const [query, setQuery] = useState<string | null>(null)
     const [loader, setLoader] = useState<Boolean>(false)
     const [getREQUEST, setGetREQUEST] = useState(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/search/`)
@@ -45,7 +49,7 @@ function SearchBar() {
         setLoader(true)
         const jwtToken = await getToken()
         axios
-            .post(`${getREQUEST}?q=${query}`, {}, {
+            .post(scope ? `${getREQUEST}?q=${query}&scope=${scope}` : `${getREQUEST}?q=${query}` , {}, {
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
                 },

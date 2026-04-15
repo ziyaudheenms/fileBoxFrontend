@@ -31,6 +31,7 @@ import ShareCard from '@/components/ShareCard'
 import MoveCard from '@/components/MoveOrCopyCard'
 import MoveOrCopyCard from '@/components/MoveOrCopyCard'
 import UpdateMetaData from '@/components/UpdateMetaData'
+import SearchBar from '@/components/SearchBar'
 
 interface FileFolderProps {
     id: number;
@@ -346,6 +347,7 @@ function page() {
 
                 <div className='w-[27%] px-2 py-2 flex flex-col gap-3 h-screen overflow-y-scroll no-scrollbar'>
                     {/*UPLOAD OPTIONS */}
+                    <SearchBar scope={params.id ? params.id[params.id.length - 1] as string : undefined}/>
                     <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                     <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
                     <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false} isOwner={true}/>
