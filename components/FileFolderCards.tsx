@@ -68,7 +68,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                 )
                                             }
                                             <div className='h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
-                                                <IconFolder stroke={2} height={90} width={90} className='text-neutral-400 font-figtree group-hover:text-neutral-100' />
+                                                <IconFolder stroke={2} height={90} width={90} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
                                             </div>
                                         </Link>
                                     ) : (
@@ -77,7 +77,12 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
 
                                                 {
                                                     item.author == user?.username ? (
-                                                        <div></div>
+
+                                                        <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-neutral-800/90 border-red-600  group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
+                                                            <h5 className='mb-1 text-neutral-100 font-light'>
+                                                                {item.file_extension}
+                                                            </h5>
+                                                        </div>
                                                     ) : (
                                                         <div className='absolute top-3 right-1'>
                                                             <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
@@ -159,19 +164,23 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                 ) : (
                     <div className="flex flex-col gap-4 py-5">
                         {folderFileData.map((item) => (
-                            <div key={item.id} className='border border-neutral-800 rounded-xl hover:border-neutral-700  flex items-center w-full'>
+                            <div key={item.id} className='group bg-neutral-900/40  border border-neutral-800 rounded-xl  flex items-center w-full group hover:border-red-900/50 transition-all duration-300 ease-out hover:-translate-y-1'>
                                 {
                                     item.isfolder ? (
                                         <div className='w-[30%] h-44 bg-zinc-900 flex items-center justify-center rounded-tl-xl rounded-bl-xl '>
                                             <Link href={`/dashboard/${item.id}`}>
-
-                                                <IconFolder stroke={2} height={90} width={90} className='text-neutral-400' />
+                                                <IconFolder stroke={2} height={90} width={90} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
                                             </Link>
 
                                         </div>
                                     ) : (
                                         <Link href={`http://localhost:3000/images/1`} className='w-[30%] h-44'>
-                                            <div className={`w-full h-44 bg-zinc-900 flex items-center justify-center rounded-tl-xl rounded-bl-xl bg-[url(${item?.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden`}>
+                                            <div className={`w-full h-44 bg-zinc-900 flex items-center justify-center rounded-tl-xl rounded-bl-xl bg-[url(${item?.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden group-hover:scale-105 transition-all duration-300 ease-out relative`}>
+                                                <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-neutral-800/90 border-red-600  group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
+                                                            <h5 className='mb-1 text-neutral-100 font-light'>
+                                                                {item.file_extension}
+                                                            </h5>
+                                                        </div>
                                                 <Image src={item.file_url ? item.file_url : ''} alt={item.name} width={100} height={100} className='w-full' />
                                             </div>
                                         </Link>
@@ -212,7 +221,9 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                                 <DropdownMenuShortcut>
                                                                     <IconFileStar stroke={2} className='text-neutral-500' />
                                                                 </DropdownMenuShortcut>
+
                                                             </DropdownMenuItem>
+
                                                         )
                                                     }
                                                     <DropdownMenuItem>
@@ -224,6 +235,11 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                         <DropdownMenuShortcut>
                                                             <IconTrash stroke={2} className='text-neutral-500' />
                                                         </DropdownMenuShortcut>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem>
+
+                                                        <DeleteButton fileFolderID={shareUUID ? undefined : String(item.id)} shareUUID={shareUUID ? shareUUID : undefined} fileFolderHash={isShared ? String(item.id) : undefined} isDropDown={true} />
+
                                                     </DropdownMenuItem>
                                                 </DropdownMenuGroup>
 

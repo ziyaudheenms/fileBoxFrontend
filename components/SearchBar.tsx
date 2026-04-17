@@ -93,7 +93,7 @@ function SearchBar({scope} : props) {
 
                         <div className='group relative flex justify-between items-center p-3 rounded-2xl 
                 bg-neutral-900/40 border border-neutral-800 
-                hover:border-neutral-700 hover:bg-neutral-800/50 
+                hover:border-red-900/50 hover:bg-neutral-800/50 
                 transition-all ease-out duration-300 
                 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] 
                 hover:-translate-y-1 cursor-pointer overflow-hidden' >

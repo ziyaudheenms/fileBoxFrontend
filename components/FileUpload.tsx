@@ -171,14 +171,18 @@ function FileUpload({ isRoot, folderID , shareUUID , parentHash }: FileUploadPro
 
     return (
 
-        <div className='border border-neutral-800 py-5 px-5 rounded-xl flex flex-col gap-4'>
-            <div className='flex items-center gap-2'>
-                <div className='bg-neutral-800 p-2 rounded-lg '>
-                    <IconUpload stroke={2} height={25} width={25} className='text-neutral-400' />
+        <div className='group border border-neutral-800 py-5 px-5 rounded-xl flex flex-col gap-4 bg-neutral-900/40 hover:border-red-900/50 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer'>
+            <div className='flex items-center gap-2 '>
+                <div className='relative flex items-center justify-center p-2.5 rounded-lg 
+                  bg-neutral-950 border border-neutral-800 
+                  group-hover:scale-110 group-hover:border-red-500/40 
+                  group-hover:shadow-[0_0_15px_rgba(220,38,38,0.2)]
+                  transition-all duration-500'>
+                    <IconUpload stroke={2} height={25} width={25} className='text-red-500 group-hover:text-red-500 z-10 transition-colors duration-300' />
                 </div>
                 <div>
-                    <h3 className='text-neutral-100 font-figtree font-bold '>Upload File</h3>
-                    <p className='text-neutral-400 font-sans font-light'>Drag and drop or browse</p>
+                    <h3 className='font-figtree text-neutral-100 text-lg font-medium tracking-tight group-hover:text-white transition-colors'>Upload File</h3>
+                    <p className='font-sans text-neutral-500 text-xm'>Drag and drop or browse</p>
                 </div>
             </div>
             <div className='border-2 border-neutral-800 border-dashed rounded-xl flex flex-col justify-center items-center  p-6'>

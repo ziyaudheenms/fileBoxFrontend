@@ -124,7 +124,7 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateP
               </div>
 
               {/* 2. The Text with "Slide-in" motion */}
-              <span className='group-hover:translate-x-1 group-hover:text-white transition-all duration-300 ease-out'>
+              <span className='group-hover:translate-x-1 group-hover:text-white transition-all duration-300 ease-out font-figtree text-neutral-100 text-lg font-medium tracking-tight '>
                 Create Folder
               </span>
 

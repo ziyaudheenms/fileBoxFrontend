@@ -106,23 +106,6 @@ function page() {
 
 
         // Reguest for accessing the storage status.
-        axios
-          .get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/storage/status/`, {
-            headers: {
-              authorization: `Bearer ${jwtToken}`,
-            },
-          })
-          .then((res) => {
-            console.log("Storage status:", res.data);
-            setStorageDetails(res.data)
-          })
-          .catch((err) => {
-            toast.error("Error fetching storage status.")
-          }
-          )
-          .finally(() => {
-            setLoading(false)
-          })
       })
       .catch((err) => { }
       )
@@ -347,7 +330,7 @@ function page() {
           {/*UPLOAD OPTIONS */}
           <FileUpload isRoot={false} />
           {/* STORAGR STATUS*/}
-          <StorageUpdate storageDetails={storageDetails} />
+          <StorageUpdate />
           {/* RECENT UPLOADS SECTION */}
           <RecentUploads />
 
