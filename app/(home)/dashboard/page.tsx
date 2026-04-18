@@ -18,6 +18,8 @@ import FileFolderCards from '@/components/FileFolderCards'
 import RecentUploads from '@/components/RecentUploads'
 import StorageUpdate from '@/components/StorageUpdate'
 import SearchBar from '@/components/SearchBar'
+import { useAppDispatch , useAppSelector } from '@/lib/redux/hooks'
+import { getAllFileFolders } from '@/features/FileFoldersSlice'
 
 interface FileFolderProps {
   id: number;
@@ -59,6 +61,11 @@ function page() {
   const [storageDetails, setStorageDetails] = useState<StorageStatusProps>({} as StorageStatusProps)
   const [cursorParam , setCursorParam] = useState<String | null>(null)
 
+  
+  const {data , isLoading , isempty, error } = useAppSelector((state) => state.fileFolders)
+  const dispatch = useAppDispatch()
+
+
   const getTheCurrentUrlParam = (url:string , param_key:string) => {
     const url_constructed = new URL(url)
     const params = new URLSearchParams(url_constructed.search);
@@ -66,54 +73,54 @@ function page() {
   }
 
   // Used For getting all the folder/file data from the backend
-  const HandleGetAllFileFolderData = async () => {
-    setHasData(false)
-    setLoading(true)
-    getTheCurrentUrlParam(getREQUEST , "cursor")
-    const jwtToken = await getToken()
-    localStorage.setItem("refreshToken", jwtToken || "")
-    console.log(jwtToken)
+  // const HandleGetAllFileFolderData = async () => {
+  //   setHasData(false)
+  //   setLoading(true)
+  //   getTheCurrentUrlParam(getREQUEST , "cursor")
+  //   const jwtToken = await getToken()
+  //   localStorage.setItem("refreshToken", jwtToken || "")
+  //   console.log(jwtToken)
 
-    // GET Request that is used to fetch all the folder/file data
-    axios
-      .get(getREQUEST, {
-        headers: {
-          authorization: `Bearer ${jwtToken}`,
-        },
-      })
-      .then((res) => {
-        console.log(res.data.status_code)
-        if (res.data.status_code === 5002) {
-          setEmpty(true)
-        }
-        else if (res.data.status_code === 5000) {
-          console.log(res)
-          setFileFolderData((prev) => {
-            const newData = res.data.data;
-            // Filter out items in newData that are already present in prev
-            const uniqueNewItems = newData.filter(newItem =>
-              !prev.some(prevItem => prevItem.id === newItem.id)
-            );
-            return [...prev, ...uniqueNewItems]
-          }) // used this expression to append new data to existing state array
-        }
-        if (res.data.message.next_cursor != null) {
-          setGETREQUEST(res.data.message.next_cursor)
-          setHasData(true)
-        } else {
-          setHasData(false)
-        }
+  //   // GET Request that is used to fetch all the folder/file data
+  //   axios
+  //     .get(getREQUEST, {
+  //       headers: {
+  //         authorization: `Bearer ${jwtToken}`,
+  //       },
+  //     })
+  //     .then((res) => {
+  //       console.log(res.data.status_code)
+  //       if (res.data.status_code === 5002) {
+  //         setEmpty(true)
+  //       }
+  //       else if (res.data.status_code === 5000) {
+  //         console.log(res)
+  //         setFileFolderData((prev) => {
+  //           const newData = res.data.data;
+  //           // Filter out items in newData that are already present in prev
+  //           const uniqueNewItems = newData.filter(newItem =>
+  //             !prev.some(prevItem => prevItem.id === newItem.id)
+  //           );
+  //           return [...prev, ...uniqueNewItems]
+  //         }) // used this expression to append new data to existing state array
+  //       }
+  //       if (res.data.message.next_cursor != null) {
+  //         setGETREQUEST(res.data.message.next_cursor)
+  //         setHasData(true)
+  //       } else {
+  //         setHasData(false)
+  //       }
 
 
-        // Reguest for accessing the storage status.
-      })
-      .catch((err) => { }
-      )
-      .finally(() => {
-        setLoading(false)
-      })
+  //       // Reguest for accessing the storage status.
+  //     })
+  //     .catch((err) => { }
+  //     )
+  //     .finally(() => {
+  //       setLoading(false)
+  //     })
 
-  }
+  // }
 
   // Updating the existing file/folder data based on trash updation , also favorite updation can be handled here
   const GetUpdatedFileFolderData = async () => {
@@ -210,8 +217,16 @@ function page() {
     }
   }
 
+  const getFileFolders = async () => {
+    const jwtToken = await getToken()
+    dispatch(getAllFileFolders({
+      requesturl: getREQUEST,
+      jwtToken :  jwtToken ? jwtToken : "",
+    }))
+  }
+
   useEffect(() => {
-    HandleGetAllFileFolderData()
+    getFileFolders()
   }, [])
 
   return (
@@ -297,14 +312,14 @@ function page() {
           </div>
 
           {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
-          <FileFolderCards folderFileData={FileFolderData} isGridLayout={gridLayout} onHandleFavoriteUpdation={HandleFavoriteUpdation} onHandleTrashUpdation={HandleTrashUpdation} isTrashPage={false} isFavoritePage={false} />
+          <FileFolderCards folderFileData={data} isGridLayout={gridLayout} onHandleFavoriteUpdation={HandleFavoriteUpdation} onHandleTrashUpdation={HandleTrashUpdation} isTrashPage={false} isFavoritePage={false} />
           {empty ? (<EmptyPage />) : (<div></div>)}
 
           <div className='w-full flex items-center justify-center'>
             {
               hasData ? (
                 <Button className='font-light' onClick={() => {
-                  HandleGetAllFileFolderData()
+                  
                 }}>Load More...</Button>
               ) : (
                 <div></div>
