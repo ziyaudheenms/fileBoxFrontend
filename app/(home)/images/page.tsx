@@ -63,6 +63,8 @@ function page() {
     const [empty, setEmpty] = useState<boolean>(false)
     const params = useParams();
 
+    
+
     const HandleGetAllFileFolderData = async () => {
         setHasData(false)
         setLoading(true)
@@ -200,6 +202,9 @@ function page() {
                 })
         }
     }
+
+
+
 
 
     useEffect(() => {
