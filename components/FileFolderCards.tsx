@@ -2,16 +2,18 @@
 import React from 'react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from 'next/link';
-import { IconDotsVertical, IconFileStar, IconFolder,  IconHeartFilled, IconTrash } from '@tabler/icons-react';
+import { IconDotsVertical, IconFileStar, IconFolder, IconHeartFilled, IconTrash } from '@tabler/icons-react';
 import ImageProcessing from './ImageProcessing';
 import Image from 'next/image'; // Add this line
 import { useUser } from '@clerk/nextjs';
 import FileFolderBadge from './FileFolderBadge';
 import DeleteButton from './DeleteButton';
-import { useAppSelector } from '@/lib/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import InfiniteLoader from './InfiniteLoader';
 import TrashLoader from './TrashLoader';
 import FavoriteLoader from './FavoriteLoader';
+import { useAuth } from '@clerk/nextjs'
+import { handleFavoriteFileFolderUpdate, handleFileFolderTrashUpdate } from '@/features/FileFoldersSlice';
 
 interface FileFolderProps {
     id: number;
@@ -35,8 +37,6 @@ interface FileFolderProps {
 interface Props {
     folderFileData: FileFolderProps[];
     isGridLayout: boolean;
-    onHandleTrashUpdation: (fileFolderID: number) => void;
-    onHandleFavoriteUpdation: (fileFolderID: number) => void;
     isTrashPage: boolean;
     isFavoritePage: boolean;
     isShared?: boolean;
@@ -45,9 +45,30 @@ interface Props {
 
 
 
-function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, onHandleFavoriteUpdation, isTrashPage, isFavoritePage, isShared, shareUUID }: Props) {
+function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavoritePage, isShared, shareUUID }: Props) {
     const { isSignedIn, user, isLoaded } = useUser();
-    const { isTrashLoading, specificRecordID , isFavoriteLoading } = useAppSelector((state) => state.fileFolders)
+    const { getToken } = useAuth()
+    const { isTrashLoading, specificRecordID, isFavoriteLoading } = useAppSelector((state) => state.fileFolders)
+    const dispatch = useAppDispatch()
+
+    // file folder operations.....
+    const HandleTrashUpdation = async (fileFolderID: number) => {
+        const jwtToken = await getToken()
+        dispatch(handleFileFolderTrashUpdate({
+            fileFolerID: fileFolderID,
+            jwtToken: jwtToken ? jwtToken : "",
+        }))
+    }
+
+    const HandleFavoriteUpdation = async (fileFolderID: number) => {
+        const jwtToken = await getToken()
+        dispatch(handleFavoriteFileFolderUpdate({
+            fileFolerID: fileFolderID,
+            jwtToken: jwtToken ? jwtToken : "",
+            isFavoritePage: isFavoritePage,
+        }))
+    }
+
 
     return (
         <div>
@@ -74,6 +95,33 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                     </div>
                                                 )
                                             }
+
+                                             {
+                                                    isFavoriteLoading && item.id == specificRecordID ?
+                                                        (
+                                                            <div className=' absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-12'>
+                                                                <FavoriteLoader />
+
+                                                            </div>
+
+                                                        ) : (
+                                                            <div></div>
+                                                        )
+                                                }
+
+                                                {
+                                                    item.is_favorite ? (
+                                                        <div className='absolute top-3 left-1 '>
+                                                            <IconHeartFilled stroke={1.5} className='text-pink-600 group-hover:scale-110 group-hover:translate-x-1.5 transition-all ease-out duration-300' />
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+
+                                                        </div>
+                                                    )
+                                                }
+
+
                                             <div className='h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
                                                 <IconFolder stroke={2} height={90} width={90} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
                                             </div>
@@ -111,7 +159,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                         )
                                                 }
 
-                                                 {
+                                                {
                                                     isFavoriteLoading && item.id == specificRecordID ?
                                                         (
                                                             <div className=' absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
@@ -128,7 +176,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                 {
                                                     item.is_favorite ? (
                                                         <div className='absolute top-3 left-1 '>
-                                                        <IconHeartFilled stroke={1.5} className='text-pink-600 group-hover:scale-110 group-hover:translate-x-1.5 transition-all ease-out duration-300'/>
+                                                            <IconHeartFilled stroke={1.5} className='text-pink-600 group-hover:scale-110 group-hover:translate-x-1.5 transition-all ease-out duration-300' />
                                                         </div>
                                                     ) : (
                                                         <div>
@@ -177,7 +225,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                             <div></div>
                                                         ) : (
                                                             <DropdownMenuItem>
-                                                                <h1 onClick={() => onHandleFavoriteUpdation(item.id)}>
+                                                                <h1 onClick={() => HandleFavoriteUpdation(item.id)}>
                                                                     {item.is_favorite ? ("Remove From Favorite") : ("Add To Favorite")}
                                                                 </h1>
                                                                 <DropdownMenuShortcut>
@@ -187,7 +235,7 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                         )
                                                     }
                                                     <DropdownMenuItem>
-                                                        <h1 onClick={() => onHandleTrashUpdation(item.id)}>
+                                                        <h1 onClick={() => HandleTrashUpdation(item.id)}>
                                                             {
                                                                 isTrashPage ? ("Restore From Trash") : ("Add To Trash")
                                                             }
@@ -264,19 +312,17 @@ function FileFolderCards({ folderFileData, isGridLayout, onHandleTrashUpdation, 
                                                             <div></div>
                                                         ) : (
                                                             <DropdownMenuItem>
-                                                                <h1 onClick={() => onHandleFavoriteUpdation(item.id)}>
+                                                                <h1 onClick={() => HandleFavoriteUpdation(item.id)}>
                                                                     {item.is_favorite ? ("Remove From Favorite") : ("Add To Favorite")}
                                                                 </h1>
                                                                 <DropdownMenuShortcut>
                                                                     <IconFileStar stroke={2} className='text-neutral-500' />
                                                                 </DropdownMenuShortcut>
-
                                                             </DropdownMenuItem>
-
                                                         )
                                                     }
                                                     <DropdownMenuItem>
-                                                        <h1 onClick={() => onHandleTrashUpdation(item.id)}>
+                                                        <h1 onClick={() => HandleTrashUpdation(item.id)}>
                                                             {
                                                                 isTrashPage ? ("Restore From Trash") : ("Add To Trash")
                                                             }

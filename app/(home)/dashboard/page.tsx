@@ -38,23 +38,6 @@ function page() {
   const {data , isLoading , error , message } = useAppSelector((state) => state.fileFolders)
   const dispatch = useAppDispatch()
 
-  const HandleTrashUpdation = async (fileFolderID: number) => {
-    const jwtToken = await getToken()
-    dispatch(handleFileFolderTrashUpdate({
-      fileFolerID: fileFolderID,
-      jwtToken : jwtToken ? jwtToken : "",
-    }))
-  }
-
-  const HandleFavoriteUpdation = async (fileFolderID: number) => {
-    const jwtToken = await getToken()
-    dispatch(handleFavoriteFileFolderUpdate({
-      fileFolerID: fileFolderID,
-      jwtToken : jwtToken ? jwtToken : "",
-      isFavoritePage: false,
-    }))
-  }
-
   const getFileFolders = async (cursor:string | null , samePage : boolean) => {  
     const jwtToken = await getToken()
     dispatch(getAllFileFolders({
@@ -150,7 +133,7 @@ function page() {
           </div>
 
           {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
-          <FileFolderCards folderFileData={data} isGridLayout={gridLayout} onHandleFavoriteUpdation={HandleFavoriteUpdation} onHandleTrashUpdation={HandleTrashUpdation} isTrashPage={false} isFavoritePage={false} />
+          <FileFolderCards folderFileData={data} isGridLayout={gridLayout}  isTrashPage={false} isFavoritePage={false} />
           
           {
             isLoading ? (

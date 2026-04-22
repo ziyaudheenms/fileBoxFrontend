@@ -7,7 +7,6 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { IconAdjustmentsAlt, IconClock, IconFolder, IconHome, IconLayoutGridRemove, IconList, IconPdf, IconPencil, IconPictureInPictureFilled, IconTextSize, IconVideo, } from '@tabler/icons-react'
 import { SearchIcon } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import axios from 'axios'
 import { useAuth } from '@clerk/nextjs'
 import InfiniteLoader from '@/components/InfiniteLoader'
 import { toast } from 'sonner'
@@ -23,14 +22,6 @@ function page() {
   const [getREQUEST, setGETREQUEST] = useState(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/fileFolders/Trash`)
   const dispatch = useAppDispatch()
   const { data, isLoading, error, message } = useAppSelector((state) => state.fileFolders)
-
-  const HandleTrashUpdation = async (fileFolderID: number) => {
-    const jwtToken = await getToken()
-    dispatch(handleFileFolderTrashUpdate({
-      fileFolerID: fileFolderID,
-      jwtToken: jwtToken ? jwtToken : "",
-    }))
-  }
 
   const getFileFolders = async (cursor: string | null, samePage: boolean) => {
     const jwtToken = await getToken()
@@ -135,7 +126,7 @@ function page() {
 
           {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
 
-          <FileFolderCards folderFileData={data} isGridLayout={gridLayout} onHandleTrashUpdation={HandleTrashUpdation} onHandleFavoriteUpdation={() => { }} isTrashPage={true} isFavoritePage={false} />
+          <FileFolderCards folderFileData={data} isGridLayout={gridLayout}  isTrashPage={true} isFavoritePage={false} />
 
           {
             data.length < 1 && !isLoading ? (

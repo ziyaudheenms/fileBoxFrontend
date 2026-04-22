@@ -1,3 +1,8 @@
+/* 
+  Redux Toolit internally uses ''Immer'' which helps as to automate
+  the process of copying the state for updating it , since the state in redux is immutable.
+*/
+
 import { createSlice , createAsyncThunk } from '@reduxjs/toolkit'
 import axios from 'axios'
 import { number } from 'framer-motion';
@@ -23,7 +28,7 @@ interface FileFolderProps {
 interface fileFolderFetchProps {requesturl : string , jwtToken:string , samePage : boolean }
 interface trashUpdateProps {fileFolerID : number , jwtToken :string}
 interface favoriteUpdateProps {fileFolerID : number , jwtToken :string , isFavoritePage : boolean}
-
+interface BreadCrumProps {folderName: string; folderID: string;}
 
 export const getAllFileFolders = createAsyncThunk<any , fileFolderFetchProps>(   // any -> type of the responce and fileFolderFetchProps -> type of the arguments passed to the function.
     'fileFolders/getAll',
@@ -32,7 +37,9 @@ export const getAllFileFolders = createAsyncThunk<any , fileFolderFetchProps>(  
             const response = await axios.get(requesturl , {
             headers: { authorization: `Bearer ${jwtToken}` },
             })
+            console.log(response.data)
             return response.data
+
         }
         catch (err) {
             return rejectWithValue(err);
@@ -89,7 +96,8 @@ export const fileFolderSlice = createSlice({
             "previous_cursor" : null,
         },
         data : [] as FileFolderProps[],
-        error : null as any  // "used to include the error object"
+        error : null as any,  // "used to include the error object"
+        breadCrumbs : [] as BreadCrumProps[]    
     },
     // Reducers are the methods used to update the states.
     reducers: {
@@ -119,6 +127,19 @@ export const fileFolderSlice = createSlice({
             state.message.next_cursor = res.message.next_cursor
             state.message.previous_cursor = res.message.previous_cursor
 
+            // Operations for adding the breadCrumbs
+            let pathname = res.breadcrumb_details.names.split('/')
+            let ids = res.breadcrumb_details.ids.split('/')
+
+            pathname.map((path: string) => {
+                let path_details = {
+                    folderName: path,
+                    folderID: ids[pathname.indexOf(path)]
+                }
+                if (!state.breadCrumbs.some(bc => bc.folderName === path_details.folderName && bc.folderID === path_details.folderID)) {
+                    state.breadCrumbs.push(path_details);
+                }
+            })
             }
         })
         .addCase(handleFileFolderTrashUpdate.pending , (state , action) => {
@@ -142,13 +163,13 @@ export const fileFolderSlice = createSlice({
         .addCase(handleFavoriteFileFolderUpdate.fulfilled, (state, action) => {
             const res = action.payload
             const fileFolderID = Number(action.meta.arg.fileFolerID)
-            if (res.status_code === 5000 && action.meta.arg.isFavoritePage) {
+            if (res.status_code === 5000 && !action.meta.arg.isFavoritePage) {
                 const index = state.data.findIndex(file => file.id === fileFolderID);
                 if (index !== -1) {
                     state.data[index].is_favorite = !state.data[index].is_favorite;   // updating the favorite state.
                 }
             }
-            else if (res.status_code === 5000 && !action.meta.arg.isFavoritePage) {
+            else if (res.status_code === 5000 && action.meta.arg.isFavoritePage) {
                 state.data = state.data.filter(file => file.id !== fileFolderID)
             }
 
