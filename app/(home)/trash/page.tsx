@@ -1,162 +1,39 @@
 "use client"
 import React, { useEffect, useState } from 'react'
-
 import Navbar from '@/components/navbar'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
-import { IconAdjustmentsAlt, IconClock, IconFolder,  IconHome, IconLayoutGridRemove, IconList, IconPdf, IconPencil, IconPictureInPictureFilled, IconTextSize,  IconVideo,  } from '@tabler/icons-react'
+import { IconAdjustmentsAlt, IconClock, IconFolder, IconHome, IconLayoutGridRemove, IconList, IconPdf, IconPencil, IconPictureInPictureFilled, IconTextSize, IconVideo, } from '@tabler/icons-react'
 import { SearchIcon } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import axios from 'axios'
 import { useAuth } from '@clerk/nextjs'
 import InfiniteLoader from '@/components/InfiniteLoader'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { EmptyPage } from '@/components/EmptyPage'
 import FileFolderCards from '@/components/FileFolderCards'
-
-
-interface FileFolderProps {
-  id: number;
-  author: string;
-  size: number;
-  parentFolder: string | null;
-  name: string;
-  uploaded_at: Date;
-  updated_at: Date;
-  isfolder: boolean;
-  is_root_folder: boolean;
-  file_url: string | null;
-  file_extension: string | null;
-  upload_status: string;
-  celery_task_ID: string | null;
-  is_trash: boolean;
-  is_favorite: boolean;
-}
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { getAllFileFolders, handleFileFolderTrashUpdate } from '@/features/FileFoldersSlice'
 
 function page() {
   const { getToken } = useAuth() // Clerk authentication hook to get JWT token
   const [gridLayout, setgridLayout] = useState(true)
-  const [folderFileData, setFolderFileData] = useState<FileFolderProps[]>([])
-  const [loading, setLoading] = useState(false)
   const [getREQUEST, setGETREQUEST] = useState(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/fileFolders/Trash`)
-  const [hasData, setHasData] = useState(false)
-  const [empty, setEmpty] = useState(false)
+  const dispatch = useAppDispatch()
+  const { data, isLoading, error, message } = useAppSelector((state) => state.fileFolders)
 
-  const router = useRouter()
-  // Used For getting all the folder/file data from the backend
-  const HandleGetAllFileFolderData = async () => {
-    setHasData(false)
-    setLoading(true)
+  const getFileFolders = async (cursor: string | null, samePage: boolean) => {
     const jwtToken = await getToken()
-    localStorage.setItem("refreshToken", jwtToken || "")
-
-    // GET Request that is used to fetch all the folder/file data
-    axios
-      .get(getREQUEST, {
-        headers: {
-          authorization: `Bearer ${jwtToken}`,
-        },
-      })
-      .then((res) => {
-        console.log(res.data.status_code)
-        if (res.data.status_code === 5002) {
-          setEmpty(true)
-        }
-        else if (res.data.status_code === 5000) {
-          console.log(res.data.data)
-          setFolderFileData((prev) => {
-            const newData = res.data.data;
-            // Filter out items in newData that are already present in prev
-            const uniqueNewItems = newData.filter(newItem =>
-              !prev.some(prevItem => prevItem.id === newItem.id)
-            );
-            return [...prev, ...uniqueNewItems]
-          }) // used this expression to append new data to existing state array
-          // setFolderFileData(res.data.data)  // used this expression to append new data to existing state array
-        }
-        if (res.data.message.next_cursor != null) {
-          setGETREQUEST(res.data.message.next_cursor)
-          setHasData(true)
-        } else {
-          setHasData(false)
-        }
-      })
-      .catch((err) => { }
-      )
-      .finally(() => {
-        setLoading(false)
-      })
-
-  }
-  // Updating the existing file/folder data based on trash updation , also favorite updation can be handled here
-   const GetUpdatedFileFolderData = async () => {
-    setHasData(false)
-    setLoading(true)
-    const jwtToken = await getToken()
-    console.log("JWT TOKEN IN UPDATE FUNC OF TRASH PAGE", jwtToken)
-
-    // GET Request that is used to fetch all the folder/file data
-    axios
-      .get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/fileFolders/Trash`, {
-        headers: {
-          authorization: `Bearer ${jwtToken}`,
-        },
-      })
-      .then((res) => {
-        console.log(res.data.status_code)
-        if (res.data.status_code === 5002) {
-          setEmpty(true)
-        }
-        else if (res.data.status_code === 5000) {
-          console.log(res.data.data)
-          setFolderFileData(res.data.data)
-        }
-        if (res.data.message.next_cursor != null) {
-          setGETREQUEST(res.data.message.next_cursor)
-          setHasData(true)
-        } else {
-          setHasData(false)
-        }
-      })
-      .catch((err) => { }
-      )
-      .finally(() => {
-        setLoading(false)
-      })
-
-  }
-  
-  const HandleTrashUpdation = async (fileFolderID: number) => {
-    const jwtToken = await getToken()
-    console.log("JWT TOKEN IN TRASH FUNC OF TRASH PAGE", jwtToken)
-    if (jwtToken) {
-      axios
-        .get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/trash/FolderFile/?folderFileID=${fileFolderID}`, {
-          headers: {
-            authorization: `Bearer ${jwtToken}`,
-          },
-        })
-        .then((res) => {
-          console.log(res.data)
-          if (res.data.status_code === 5000) {
-            toast.success("Item moved to Dashboard.")
-            GetUpdatedFileFolderData()
-          }
-          else if (res.data.status_code === 5002) {
-            toast.error("Xant Delete item. Move to Trash failed.")
-          }
-        })
-        .catch((err) => {
-          console.log(err)
-
-        })
-    }
+    dispatch(getAllFileFolders({
+      requesturl: cursor ? cursor : getREQUEST,
+      jwtToken: jwtToken ? jwtToken : "",
+      samePage: samePage,
+    }))
   }
 
   useEffect(() => {
-    HandleGetAllFileFolderData()
+    getFileFolders(null, false)
   }, [])
 
   return (
@@ -244,15 +121,15 @@ function page() {
           </div>
           <div className='w-full flex items-center gap-2'>
             <h3 className='font-sans text-neutral-100 text-sm'>All Items</h3>
-            <span className='text-xs font-sans text-neutral-400 bg-neutral-900 px-2 py-1 rounded-lg'>{folderFileData.length}</span>
+            <span className='text-xs font-sans text-neutral-400 bg-neutral-900 px-2 py-1 rounded-lg'>{data.length}</span>
           </div>
 
           {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
 
-          <FileFolderCards folderFileData={folderFileData} isGridLayout={gridLayout} onHandleTrashUpdation={HandleTrashUpdation} onHandleFavoriteUpdation={() => { }} isTrashPage={true} isFavoritePage={false} />
+          <FileFolderCards folderFileData={data} isGridLayout={gridLayout}  isTrashPage={true} isFavoritePage={false} />
 
           {
-            empty ? (
+            data.length < 1 && !isLoading ? (
               <EmptyPage />
             ) : (
               <div></div>
@@ -261,9 +138,9 @@ function page() {
 
           <div className='w-full flex items-center justify-center'>
             {
-              hasData ? (
+              message.next_cursor ? (
                 <Button className='font-light' onClick={() => {
-                  HandleGetAllFileFolderData()
+                  getFileFolders(message.next_cursor, true)
                 }}>Load More...</Button>
               ) : (
                 <div></div>
@@ -272,7 +149,7 @@ function page() {
           </div>
 
           {
-            loading ? (
+            isLoading ? (
               <InfiniteLoader />
             ) : (
               <div></div>
@@ -284,7 +161,7 @@ function page() {
 
 
         {/* ADDITIONAL DETAILS RIGHT SECTION ALONG WITH UPLOAD OPTIONS */}
-      
+
       </div>
     </div>
   )

@@ -11,7 +11,7 @@ import {
 import { Geist, Geist_Mono, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Toaster } from "@/components/ui/sonner"
-import Navbar from '@/components/navbar'
+import StoreProvider from '@/providers/storeProvider'
 
 
 const geistSans = Geist({
@@ -49,8 +49,9 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} ${plusJakartaSans.variable} antialiased`}>
          
-          
+          <StoreProvider>
           {children}
+          </StoreProvider>
           <Toaster richColors/>
         </body>
       </html>
