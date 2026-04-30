@@ -1,9 +1,11 @@
 import {configureStore} from '@reduxjs/toolkit'
 import fileFolderReducer from "@/features/FileFoldersSlice"
+import fileFolderSecurityReducer from "@/features/FileFolderSecuritySlice"
 
 export const store = configureStore({
     reducer: {
-        fileFolders : fileFolderReducer     
+        fileFolders : fileFolderReducer,
+        fileFolderSecurityPolicy : fileFolderSecurityReducer,     
     }
 })
 

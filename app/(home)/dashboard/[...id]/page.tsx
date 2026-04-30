@@ -28,6 +28,8 @@ import UpdateMetaData from '@/components/UpdateMetaData'
 import SearchBar from '@/components/SearchBar'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getAllFileFolders, handleFavoriteFileFolderUpdate, handleFileFolderTrashUpdate } from '@/features/FileFoldersSlice'
+import Password from '@/components/Password'
+import Settings from '@/components/Settings'
 
 interface BreadCrumProps {folderName: string; folderID: string;}
 
@@ -36,7 +38,7 @@ function page() {
     const [gridLayout, setgridLayout] = useState(true)
     const [getREQUEST, setGETREQUEST] = useState<string>('http://127.0.0.1:8000/api/v1/fileFolders')
     const params = useParams();
-    const { data, isLoading, error, message , breadCrumbs} = useAppSelector((state) => state.fileFolders)
+    const { data, isLoading, error, message , breadCrumbs , sessionStatus} = useAppSelector((state) => state.fileFolders)
     const dispatch = useAppDispatch()
 
     const getFileFolders = async (cursor: string | null, samePage: boolean) => {
@@ -51,6 +53,32 @@ function page() {
     useEffect(() => {
         getFileFolders(null, false)
     }, [])
+
+
+    useEffect(() => {
+        if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002) {
+            toast.error("Session expired. Please enter password again.")
+        }
+        if (sessionStatus?.code === 5000) {
+            getFileFolders(null , false)
+        }
+    } , [sessionStatus])
+
+    if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002 || sessionStatus?.code === 4005) {
+        return (
+            <div className='w-full h-screen flex flex-col items-center justify-center gap-2'>
+            <Password fileFolderID={params.id ? params.id as string : undefined}/>  
+            {
+                isLoading ? (
+                    <InfiniteLoader />
+                ) : (
+                    <div></div>
+                )
+            }
+            </div>
+        )
+    }
+
 
     return (
         <div>
@@ -164,6 +192,7 @@ function page() {
                     <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false} isOwner={true} />
                     <MoveOrCopyCard sourceID={params.id ? params.id[params.id.length - 1] as string : ""} type={'folder'} isShared={false} />
                     <UpdateMetaData fileID={params.id ? params.id[params.id.length - 1] as string : undefined} type='folder' />
+                    <Settings fileFolderID={params.id ? params.id[params.id.length - 1] as string : undefined}/>  // passing the parentFolderID
                 </div>
             </div>
         </div>

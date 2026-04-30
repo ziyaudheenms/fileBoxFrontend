@@ -26,6 +26,8 @@ interface FileFolderProps {
 }
 
 interface fileFolderFetchProps {requesturl : string , jwtToken:string , samePage : boolean }
+interface singleFileFetchProps {requesturl : string , jwtToken:string }
+interface passwordToGetSessionProps {requesturl : string , jwtToken:string , password : string }
 interface trashUpdateProps {fileFolerID : number , jwtToken :string}
 interface favoriteUpdateProps {fileFolerID : number , jwtToken :string , isFavoritePage : boolean}
 interface BreadCrumProps {folderName: string; folderID: string;}
@@ -40,6 +42,26 @@ export const getAllFileFolders = createAsyncThunk<any , fileFolderFetchProps>(  
             console.log(response.data)
             return response.data
 
+        }
+        catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+)
+
+export const getSingleFile = createAsyncThunk<any , singleFileFetchProps>(   // any -> type of the responce and fileFolderFetchProps -> type of the arguments passed to the function.
+    'fileFolders/getSingle',
+    async({requesturl , jwtToken } ,{rejectWithValue}) => {   //rejextWithValue -> is used to handle the rejection of the api request
+        console.log("hitting the api.........")
+        try {
+            const response = await axios.get(requesturl , {
+            headers: { 
+                    authorization: `Bearer ${jwtToken}`
+                },
+                withCredentials: true, // Include cookies in the request
+            })
+            console.log(response.data)
+            return response.data
         }
         catch (err) {
             return rejectWithValue(err);
@@ -84,6 +106,26 @@ export const handleFavoriteFileFolderUpdate = createAsyncThunk<any , favoriteUpd
     }
 ) 
 
+export const handlePasswordToGetSession = createAsyncThunk<any , passwordToGetSessionProps>(   // any -> type of the responce and fileFolderFetchProps -> type of the arguments passed to the function.
+    'fileFolders/getSession',
+    async({requesturl , jwtToken  , password} ,{rejectWithValue}) => {   //rejextWithValue -> is used to handle the rejection of the api request
+        try {
+            const response = await axios.post('/api/verify-password' ,{
+                fileFolderID: 7,
+                password: password,
+                jwtToken: jwtToken,
+            }, {
+            headers: { authorization: `Bearer ${jwtToken}`},
+            })
+            console.log(response.data)
+            return response.data
+        }
+        catch (err) {
+            return rejectWithValue(err);
+        }
+    }
+)
+
 export const fileFolderSlice = createSlice({
     name:"fileFolders",
     initialState: {
@@ -96,8 +138,10 @@ export const fileFolderSlice = createSlice({
             "previous_cursor" : null,
         },
         data : [] as FileFolderProps[],
+        singlePageData : {} as FileFolderProps,  // used to store the single page resource file data
         error : null as any,  // "used to include the error object"
-        breadCrumbs : [] as BreadCrumProps[]    
+        breadCrumbs : [] as BreadCrumProps[],
+        sessionStatus : null as { code: number, message: string } | null, //used to manage the session related error
     },
     // Reducers are the methods used to update the states.
     reducers: {
@@ -175,12 +219,36 @@ export const fileFolderSlice = createSlice({
 
             state.isFavoriteLoading = false
         })
+        .addCase(getSingleFile.pending, (state, action) => {
+            state.isLoading = true;
+            state.sessionStatus = null;
+        })
+        .addCase(getSingleFile.fulfilled, (state, action) => {
+            state.isLoading = false;
+            const res = action.payload
+            state.sessionStatus = {
+                code: res.status_code,
+                message: res.message
+            }
+            if (res.status_code === 5000) {
+                state.singlePageData = res.data  //storing the single page resource file in the state
+            }
+        })
+        .addCase(handlePasswordToGetSession.pending, (state, action) => {
+            state.isLoading = true;
+        })
+        .addCase(handlePasswordToGetSession.fulfilled, (state, action) => {
+            state.isLoading = false;
+            console.log("fullfilled the request...")
+            const res = action.payload
+            state.sessionStatus = {
+                code: res.status_code,
+                message: res.message
+            }// updating the session status to success when we get the valid session token.
+        })
     },
 
 
 })
-
-
-
 
 export default fileFolderSlice.reducer; 
