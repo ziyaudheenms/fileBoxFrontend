@@ -70,11 +70,17 @@ export const fileFolderSecuritySlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+        // .addCase(getFileFolderSettings.pending , (state , action) => {
+        //         // this means that the filefolder have no security policy.
+        //         state.settingData.is_password_protected = false;
+        //         state.settingData.is_critical = false;
+        // })
         .addCase(getFileFolderSettings.fulfilled , (state , action) => {
             let res = action.payload;
-
+            console.log("security..........." , res.status_code)
             if (res.status_code === 5001) {
                 // this means that the filefolder have no security policy.
+                console.log("hitting 5001" )
                 state.settingData.is_password_protected = false;
                 state.settingData.is_critical = false;
             }

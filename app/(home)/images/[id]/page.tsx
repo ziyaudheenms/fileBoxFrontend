@@ -4,7 +4,7 @@ import Navbar from '@/components/navbar'
 import Image from 'next/image'
 import { IconHome } from '@tabler/icons-react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { toast } from 'sonner'
 import InfiniteLoader from '@/components/InfiniteLoader'
@@ -48,7 +48,7 @@ function page() {
     const wsRef = React.useRef<WebSocket | null>(null);
     const { singlePageData, isLoading, sessionStatus} = useAppSelector((state) => state.fileFolders)
     const dispatch = useAppDispatch()
-
+    const router = useRouter()
 
     const HandleSingleImage = async () => {
         setLoading(true)
@@ -60,11 +60,10 @@ function page() {
     }
 
     useEffect(() => {
-        if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002) {
+        if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002 || sessionStatus?.code === 4005) {
             toast.error("Session expired. Please enter password again.")
-        }
-        if (sessionStatus?.code === 5000) {
-            HandleSingleImage()
+            router.push(`/password/${params.id ? params.id as string : undefined}`)
+
         }
     } , [sessionStatus])
 
@@ -122,21 +121,6 @@ function page() {
     //         console.log('No need for WebSocket connection. Current upload status:', folderFileData?.upload_status);
     //     }
     // }, [token, singlePageData?.id])
-
-    if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002 || sessionStatus?.code === 4005) {
-        return (
-            <div className='w-full h-screen flex flex-col items-center justify-center gap-2'>
-            <Password fileFolderID={params.id ? params.id as string : undefined}/>  
-            {
-                isLoading ? (
-                    <InfiniteLoader />
-                ) : (
-                    <div></div>
-                )
-            }
-            </div>
-        )
-    }
 
     return (
         <div>

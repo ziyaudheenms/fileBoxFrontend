@@ -5,17 +5,19 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { handlePasswordToGetSession } from '@/features/FileFoldersSlice'
 import { useAuth } from '@clerk/clerk-react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation';
 
 function Password({fileFolderID} : {fileFolderID: string | undefined}) {
     const { getToken } = useAuth()
     const [password , setPassword] = useState("")
     const dispatch = useAppDispatch()
-    const { sessionStatus} = useAppSelector((state) => state.fileFolders)
+    const { sessionStatus } = useAppSelector((state) => state.fileFolders)
+    const router = useRouter();
 
     const handlePasswordSubmittion = async () => {
         const jwtToken = await getToken()
         dispatch(handlePasswordToGetSession({
-            requesturl: `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/verify/password?fileFolderID=${fileFolderID}`,
+            requestID: fileFolderID ,
             jwtToken: jwtToken ? jwtToken : "",
             password: password
         }))
@@ -24,15 +26,12 @@ function Password({fileFolderID} : {fileFolderID: string | undefined}) {
     useEffect(() => {
         if (sessionStatus?.code === 5000) {
             toast.success("Password verified successfully! You can now access the file/folder.")
+            router.back() //redirecting to the url from which we came here.
         }
         else if(sessionStatus?.code === 5009) {
             toast.error("Invalid password. Please try again.")
         }
     }, [sessionStatus])
-
-
-
-
 
     return (
         <div className="relative group w-full max-w-md">

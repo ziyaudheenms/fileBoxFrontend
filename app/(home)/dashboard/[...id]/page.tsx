@@ -30,21 +30,23 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getAllFileFolders, handleFavoriteFileFolderUpdate, handleFileFolderTrashUpdate } from '@/features/FileFoldersSlice'
 import Password from '@/components/Password'
 import Settings from '@/components/Settings'
-
+import { useRouter } from 'next/navigation'
 interface BreadCrumProps {folderName: string; folderID: string;}
 
 function page() {
     const { getToken } = useAuth()
     const [gridLayout, setgridLayout] = useState(true)
-    const [getREQUEST, setGETREQUEST] = useState<string>('http://127.0.0.1:8000/api/v1/fileFolders')
+    const [getREQUEST, setGETREQUEST] = useState<string>('http://localhost:8000/api/v1/fileFolders')
     const params = useParams();
     const { data, isLoading, error, message , breadCrumbs , sessionStatus} = useAppSelector((state) => state.fileFolders)
     const dispatch = useAppDispatch()
+    const router = useRouter()
+
 
     const getFileFolders = async (cursor: string | null, samePage: boolean) => {
         const jwtToken = await getToken()
         dispatch(getAllFileFolders({
-            requesturl: cursor ? cursor : `${getREQUEST}?parentFolderID=${params.id ? params.id[params.id.length - 1] as string : undefined}`,
+            requesturl: cursor ? cursor : `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/fileFolders?parentFolderID=${params.id ? params.id[params.id.length - 1] as string : undefined}`,
             jwtToken: jwtToken ? jwtToken : "",
             samePage: samePage
         }))
@@ -56,30 +58,14 @@ function page() {
 
 
     useEffect(() => {
-        if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002) {
+        if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002 || sessionStatus?.code === 4005) {
             toast.error("Session expired. Please enter password again.")
+            router.push(`/password/${params.id ? params.id[params.id.length - 1] as string : undefined}`)
         }
-        if (sessionStatus?.code === 5000) {
-            getFileFolders(null , false)
-        }
+       
     } , [sessionStatus])
 
-    if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002 || sessionStatus?.code === 4005) {
-        return (
-            <div className='w-full h-screen flex flex-col items-center justify-center gap-2'>
-            <Password fileFolderID={params.id ? params.id as string : undefined}/>  
-            {
-                isLoading ? (
-                    <InfiniteLoader />
-                ) : (
-                    <div></div>
-                )
-            }
-            </div>
-        )
-    }
-
-
+    
     return (
         <div>
             <Navbar />

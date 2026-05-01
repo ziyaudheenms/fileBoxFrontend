@@ -7,7 +7,7 @@ function InfiniteLoader() {
   return (
 
     <div className='flex items-center justify-center  w-full'>
-      <Spinner className='text-white size-8' fontSize={10} />
+      <Spinner className='text-red-600 size-8' fontSize={10} />
     </div>
 
   )

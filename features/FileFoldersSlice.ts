@@ -27,7 +27,7 @@ interface FileFolderProps {
 
 interface fileFolderFetchProps {requesturl : string , jwtToken:string , samePage : boolean }
 interface singleFileFetchProps {requesturl : string , jwtToken:string }
-interface passwordToGetSessionProps {requesturl : string , jwtToken:string , password : string }
+interface passwordToGetSessionProps {requestID : string | undefined , jwtToken:string , password : string }
 interface trashUpdateProps {fileFolerID : number , jwtToken :string}
 interface favoriteUpdateProps {fileFolerID : number , jwtToken :string , isFavoritePage : boolean}
 interface BreadCrumProps {folderName: string; folderID: string;}
@@ -37,7 +37,10 @@ export const getAllFileFolders = createAsyncThunk<any , fileFolderFetchProps>(  
     async({requesturl , jwtToken  , samePage} ,{rejectWithValue}) => {   //rejextWithValue -> is used to handle the rejection of the api request
         try {
             const response = await axios.get(requesturl , {
-            headers: { authorization: `Bearer ${jwtToken}` },
+            headers: { 
+                    authorization: `Bearer ${jwtToken}`
+                },
+                withCredentials: true, // Include cookies in the request
             })
             console.log(response.data)
             return response.data
@@ -108,10 +111,10 @@ export const handleFavoriteFileFolderUpdate = createAsyncThunk<any , favoriteUpd
 
 export const handlePasswordToGetSession = createAsyncThunk<any , passwordToGetSessionProps>(   // any -> type of the responce and fileFolderFetchProps -> type of the arguments passed to the function.
     'fileFolders/getSession',
-    async({requesturl , jwtToken  , password} ,{rejectWithValue}) => {   //rejextWithValue -> is used to handle the rejection of the api request
+    async({requestID , jwtToken  , password} ,{rejectWithValue}) => {   //rejextWithValue -> is used to handle the rejection of the api request
         try {
             const response = await axios.post('/api/verify-password' ,{
-                fileFolderID: 7,
+                fileFolderID: requestID,
                 password: password,
                 jwtToken: jwtToken,
             }, {
@@ -153,12 +156,17 @@ export const fileFolderSlice = createSlice({
             const isSamePagee = action.meta.arg.samePage
             if (!isSamePagee) {
                 state.data = []
+                state.breadCrumbs = []
             }
         })
         .addCase(getAllFileFolders.fulfilled , (state , action) => {
             state.isLoading = false;
             const res = action.payload
-            
+             state.sessionStatus = {
+                code: res.status_code,
+                message: res.message
+            }// updating the session status to success when we get the valid session token.
+
             // if we get 5000 , want to update the fileFolder state
             if (res.status_code === 5000) {
             // Logic to append unique items
