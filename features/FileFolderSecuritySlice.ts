@@ -6,11 +6,13 @@ import { createSlice , createAsyncThunk } from '@reduxjs/toolkit'
 import axios from 'axios'
 
 
-interface fileFolderSecurityProps {is_password_protected : boolean , is_critical:boolean ,}
+interface fileFolderSecurityProps {is_password_protected : boolean , is_critical:boolean ,is_locked:boolean ,session_duration: number}
 interface fileFolderSecurityFetchProps {requesturl : string , jwtToken: string , request_payload? : {
     is_password_protected? : boolean ,
     is_security_critical? : boolean ,
     password? : string,
+    is_locked? : boolean ,
+    session_duration? : number ,
 } }
 
 
@@ -57,6 +59,8 @@ export const fileFolderSecuritySlice = createSlice({
         settingData: {
             is_password_protected : false,
             is_critical : false,
+            session_duration : 0,
+            is_locked : false,
         } as fileFolderSecurityProps,
         securitySettingsPassword : '',
         securitySettingStatus : {
@@ -87,8 +91,12 @@ export const fileFolderSecuritySlice = createSlice({
 
             if (res.status_code === 5000) {
                 // updating with the data from backend.
-                state.settingData.is_password_protected = res.data.is_password_protected;
-                state.settingData.is_critical = res.data.is_critical;
+                state.settingData = {
+                    is_password_protected : res.data.is_password_protected,
+                    is_critical: res.data.is_critical,
+                    session_duration : res.data.session_duration,
+                    is_locked: res.data.is_locked,
+                }
             }
         })
         .addCase(updateSecurity.pending , (state , action) => {
@@ -106,6 +114,12 @@ export const fileFolderSecuritySlice = createSlice({
                 state.securitySettingsPassword = action.meta.arg.request_payload?.password? action.meta.arg.request_payload.password : state.securitySettingsPassword;
                 state.settingData.is_password_protected = action.meta.arg.request_payload?.is_password_protected? action.meta.arg.request_payload.is_password_protected : state.settingData.is_password_protected;
                 state.settingData.is_critical = action.meta.arg.request_payload?.is_security_critical? action.meta.arg.request_payload.is_security_critical : state.settingData.is_critical;
+                state.settingData = {
+                    is_password_protected : action.meta.arg.request_payload?.is_password_protected? action.meta.arg.request_payload.is_password_protected : state.settingData.is_password_protected,
+                    is_critical: action.meta.arg.request_payload?.is_security_critical? action.meta.arg.request_payload.is_security_critical : state.settingData.is_critical,
+                    session_duration : action.meta.arg.request_payload?.session_duration? action.meta.arg.request_payload.session_duration : state.settingData.session_duration,
+                    is_locked: action.meta.arg.request_payload?.is_locked? action.meta.arg.request_payload.is_locked : state.settingData.is_locked,
+                }
                 state.securitySettingStatus = {
                     status_code: res.status_code,
                     message: res.message

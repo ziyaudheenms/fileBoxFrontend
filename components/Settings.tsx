@@ -12,13 +12,19 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from './ui/button'
 import { useAuth } from '@clerk/nextjs'
-import { IconAdjustmentsShare, IconBiohazard, IconEye, IconEyeOff, IconLock, IconSettings, IconToggleLeftFilled, IconToggleRightFilled, IconX } from '@tabler/icons-react'
+import { IconAdjustmentsShare, IconBiohazard, IconClock, IconEye, IconEyeOff, IconLock, IconSettings, IconToggleLeftFilled, IconToggleRightFilled, IconX } from '@tabler/icons-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getFileFolderSettings, updateSecurity } from '@/features/FileFolderSecuritySlice'
 import { toast } from 'sonner'
 import InfiniteLoader from './InfiniteLoader'
 
-interface fileFolderSecurityProps { is_password_protected?: boolean, is_security_critical?: boolean, password?: string }
+interface fileFolderSecurityProps {
+  is_password_protected?: boolean,
+  is_security_critical?: boolean,
+  password?: string,
+  is_locked?: boolean,
+  session_duration?: number
+}
 
 function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
   const { getToken } = useAuth()
@@ -26,7 +32,9 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
   const dispatch = useAppDispatch()
   const [toggleState, setToggleState] = useState(settingData.is_password_protected);
   const [criticalState, setCriticalState] = useState(settingData.is_critical);
+  const [isLocked, setIsLocked] = useState(settingData.is_locked);
   const [password, setPassword] = useState('')
+  const [duration, setDuration] = useState(settingData.session_duration)
   const [visiblePassword, setvisiblePassword] = useState(true)
 
   const getFileFolderSecurity = async () => {
@@ -43,16 +51,17 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
     //Preparing the request payload based on the changes made by the user. Only the changed fields will be sent in the request to optimize it and also to avoid over writing any unchanged data in the backend.
     let request_payload = {} as fileFolderSecurityProps
 
-    if (toggleState && !securitySettingsPassword && password === '') {
-      toast.info('enter the password');
-      return;
-    }
-
     if (toggleState != settingData.is_password_protected) {
       request_payload['is_password_protected'] = toggleState
     }
     if (criticalState != settingData.is_critical) {
       request_payload['is_security_critical'] = criticalState
+    }
+    if (isLocked != settingData.is_locked) {
+      request_payload['is_locked'] = isLocked
+    }
+    if (duration != settingData.session_duration) {
+      request_payload['session_duration'] = duration
     }
 
     if (password != '') {
@@ -61,6 +70,11 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
 
     if (criticalState && !toggleState && password === '') {
       toast.info('enable password and enter the password first before marking as critical');
+      return;
+    }
+
+    if (isLocked && !toggleState) {
+      toast.info('enable password and enter the password first before marking as Locked');
       return;
     }
 
@@ -82,7 +96,7 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
       toast.success(securitySettingStatus.message)
       getFileFolderSecurity()
     }
-    
+
   }, [securitySettingStatus.status_code])
 
 
@@ -107,7 +121,7 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-6 h-96 overflow-y-scroll no-scrollbar">
             {/* Policy Toggles */}
             <div className="space-y-4">
               {/* Toggle Item 1 */}
@@ -121,6 +135,41 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
                 </button>
               </div>
 
+
+              {toggleState && (
+                <div className="relative group w-full flex items-center gap-2">
+                  {/* The Glow Effect (Background layer) */}
+                  <div className="absolute -inset-0.5 bg-linear-to-r from-red-600 to-orange-600 rounded-xl blur opacity-0 group-focus-within:opacity-20 transition duration-500"></div>
+                  <div className="relative w-full flex items-center bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300 group-focus-within:border-neutral-600 group-focus-within:bg-black shadow-2xl justify-between">
+                    {/* Leading Icon */}
+                    <div className="pl-4 text-neutral-500 group-focus-within:text-red-500 transition-colors duration-300">
+                      <IconLock size={18} strokeWidth={2.5} />
+                    </div>
+                    {/* The Input */}
+                    <input
+                      type={visiblePassword ? "text" : "password"}
+                      placeholder="Enter the password"
+                      className="w-full bg-transparent border-none py-3 px-4 text-neutral-100 placeholder:text-neutral-500 focus:ring-0 focus:outline-none font-figtree text-sm"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  {
+                    visiblePassword ? (
+                      <div className="relative z-50" onClick={() => { setvisiblePassword(false); }}>
+                        <IconEyeOff strokeWidth={2} className='text-red-500 h-10 w-8 cursor-pointer' />
+                      </div>
+
+                    ) : (
+                      <div className="relative z-50" onClick={() => {
+                        setvisiblePassword(true)
+                      }}>
+                        <IconEye strokeWidth={2} className='text-neutral-500 h-10 w-8 cursor-pointer' />
+                      </div>
+                    )
+                  }
+                </div>
+              )}
               {/* Toggle Item 2 */}
               <div className={`flex items-center justify-between p-4 bg-neutral-900/30 rounded-xl border ${criticalState ? 'border-red-500 hover:border-red-500' : 'border-neutral-800/50 hover:border-neutral-700'} transition-all duration-300 ease-out active:translate-y-0 active:scale-95`}>
                 <span className='text-neutral-200 font-medium flex items-center gap-2'> <IconBiohazard stroke={1.5} />Mark as Critical</span>
@@ -131,49 +180,47 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
                   }
                 </button>
               </div>
-            </div>
-
-            {/* Helper Note */}
-            <div className="p-4 bg-red-950/10 border border-red-900/20 rounded-xl">
-              <p className="text-sm text-red-400/80 leading-relaxed">
-                <span className="font-bold text-red-500">Note:</span> Critical files require password access even for the author.
-              </p>
-            </div>
-            {/* Password Input (Animated) */}
-            {toggleState && (
-              <div className="relative group w-full flex items-center gap-2">
-                {/* The Glow Effect (Background layer) */}
-                <div className="absolute -inset-0.5 bg-linear-to-r from-red-600 to-orange-600 rounded-xl blur opacity-0 group-focus-within:opacity-20 transition duration-500"></div>
-                <div className="relative w-full flex items-center bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300 group-focus-within:border-neutral-600 group-focus-within:bg-black shadow-2xl justify-between">
-                  {/* Leading Icon */}
-                  <div className="pl-4 text-neutral-500 group-focus-within:text-red-500 transition-colors duration-300">
-                    <IconLock size={18} strokeWidth={2.5} />
-                  </div>
-                  {/* The Input */}
-                  <input
-                    type={visiblePassword ? "text" : "password"}
-                    placeholder="Enter the password"
-                    className="w-full bg-transparent border-none py-3 px-4 text-neutral-100 placeholder:text-neutral-500 focus:ring-0 focus:outline-none font-figtree text-sm"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                {
-                  visiblePassword ? (
-                    <div className="relative z-50" onClick={() => { setvisiblePassword(false); }}>
-                      <IconEyeOff strokeWidth={2} className='text-red-500 h-10 w-8 cursor-pointer' />
-                    </div>
-
-                  ) : (
-                    <div className="relative z-50" onClick={() => {
-                      setvisiblePassword(true)
-                    }}>
-                      <IconEye strokeWidth={2} className='text-neutral-500 h-10 w-8 cursor-pointer' />
-                    </div>
-                  )
-                }
+              <div className="p-4 bg-red-950/10 border border-red-900/20 rounded-xl">
+                <p className="text-sm text-red-400/80 leading-relaxed">
+                  <span className="font-bold text-red-500">Note:</span> Critical files require password access even for the author.
+                </p>
               </div>
-            )}
+
+
+              <div className={`flex items-center justify-between p-4 bg-neutral-900/30 rounded-xl border border-neutral-800/50 hover:border-neutral-700 transition-all duration-300 ease-out active:translate-y-0 active:scale-95`}>
+                <span className='text-neutral-200 font-medium flex items-center gap-2'> <IconBiohazard stroke={1.5} />Mark as Lock</span>
+                <button onClick={() => setIsLocked(!isLocked)} className="transition-transform hover:scale-110">
+                  {isLocked ?
+                    <IconToggleRightFilled className='h-8 w-8 text-orange-500' /> :
+                    <IconToggleLeftFilled className='h-8 w-8 text-neutral-700' />
+                  }
+                </button>
+              </div>
+              <div className="p-4 bg-red-950/10 border border-orange-900/20 rounded-xl">
+                <p className="text-sm text-orange-400/80 leading-relaxed">
+                  <span className="font-bold text-orange-500">Note:</span> Locked files require password access each time they are clicked to open.
+                </p>
+              </div>
+              <div className={`flex items-center justify-between p-4 bg-neutral-900/30 rounded-xl border border-neutral-800/50 hover:border-neutral-700 transition-all duration-300 ease-out active:translate-y-0 active:scale-95`}>
+                <span className='text-neutral-200 font-medium flex items-center gap-2'> <IconClock stroke={1.5} />Set the session time</span>
+                <input
+                  type='number'
+                  className='w-[20%] bg-transparent border border-orange-500 rounded-lg py-3 px-4 text-neutral-100 placeholder:text-neutral-500 focus:ring-0 focus:outline-none font-figtree text-sm'
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.valueAsNumber)} />
+              </div>
+
+              <div className="p-4 bg-red-950/10 border border-blue-900/20 rounded-xl">
+                <p className="text-sm text-blue-400/80 leading-relaxed">
+                  <span className="font-bold text-blue-500">Note:</span> Set the time duration for the password validity.
+                </p>
+              </div>
+
+
+            </div>
+
+            {/* Password Input (Animated) */}
+
           </div>
           <DialogFooter className='m-2'>
             <DialogClose asChild>
@@ -187,9 +234,9 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
                    shadow-[0_1px_2px_rgba(0,0,0,0.1)]
                    hover:shadow-[0_8px_16px_rgba(220,38,38,0.08)]
                    overflow-hidden' onClick={() => {
-                    setToggleState(settingData.is_password_protected)
-                    setCriticalState(settingData.is_critical)
-                   }}>
+                  setToggleState(settingData.is_password_protected)
+                  setCriticalState(settingData.is_critical)
+                }}>
                 {/* Inner Glow/Gradient Layer (Appears on Hover) */}
                 <span className='absolute inset-0 bg-linear-to-b from-red-600/20 to-transparent
                    opacity-0 group-hover:opacity-100
