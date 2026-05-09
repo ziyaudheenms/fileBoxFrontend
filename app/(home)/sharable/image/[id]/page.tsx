@@ -16,6 +16,7 @@ import ShareCard from '@/components/ShareCard';
 import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData';
 import Download from '@/components/Download';
 import UpdateMetaData from '@/components/UpdateMetaData';
+import { useRouter } from 'next/navigation';
 
 interface FileFolderProps {
     id: number;
@@ -73,22 +74,29 @@ function page() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<SharableErrorType | null>(null)
     const [folderFileData, setFolderFileData] = useState<FileFolderProps>({} as FileFolderProps)
+    const router = useRouter()
 
     const HandleGetSharedImage = async () => {
         setLoading(true)
         setError(null) // Reset error state before fetching new data
         const jwtToken = await getToken() //getting the authentication token ....................
         axios
-            .post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharedFileFolder?sharableUUID=${params.id ? params.id as string : undefined}`, {}, {
+            .get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharedFileFolder?sharableUUID=${params.id ? params.id as string : undefined}`,{
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
                 },
+                withCredentials : true,  // for passing the cokkie credientials.........
             },)
             .then((response) => {
                 console.log(response.data)
                 if (response.data.status_code == 5000) {
                     setFolderFileData(response.data.data)
                     toast.success("successfully fetched the data")
+                }
+                else if (response.data.status_code === 5003 || response.data.status_code === 4005) {
+                    toast.error("Session expired. Please enter password again.")
+                    router.push(`/password/${params.id ? params.id as string : undefined}`)
+
                 }
                 else {
                     const currentError = ERROR_MAP[response.data.status_code];
@@ -188,7 +196,7 @@ function page() {
                                     {
                                         canShare ? (
                                             <>
-                                                <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={true}/>
+                                                <ShareCard fileFolderID={folderFileData.id} type={'image'} isShared={true} />
                                                 {
                                                     canDelete ? (
                                                         <Button className='w-[30%] bg-neutral-950 border border-neutral-800 hover:bg-red-600'>
@@ -212,7 +220,7 @@ function page() {
                         {
                             canEdit ? (
                                 <>
-                                    <UpdateMetaData sharableUUID={params.id ? params.id as string: undefined}/>
+                                    <UpdateMetaData sharableUUID={params.id ? params.id as string : undefined} type='file' />
                                 </>
                             ) : (
                                 <div></div>

@@ -27,7 +27,7 @@ import ShareCard from '@/components/ShareCard'
 import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData'
 import SharableError from '@/components/SharableError'
 import ImageWidget from '@/components/ImageWidget'
-
+import { useRouter } from 'next/navigation'
 interface FileFolderProps {
     id: number;
     author: string;
@@ -58,7 +58,7 @@ function page() {
     const params = useParams();
     const [userPermission, setUserPermission] = useState<string>("PUBLIC")
     const [error, setError] = useState<SharableErrorType | null>(null)
-    
+    const router = useRouter()
 //  first call the access permissions API to get the user permissions for the current sharable link and then based on the permissions fetch the data and render the UI accordingly.
 
      const HandleGetFileData = async () => {
@@ -71,7 +71,8 @@ function page() {
             .get(`${process.env.NEXT_PUBLIC_DOMAIN}/${getREQUEST}?sharableUUID=${params.id ? params.id as string : undefined}&parentID=${params.fileHash ? params.fileHash as string : undefined}`, {
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
-                }
+                },
+                withCredentials: true,
             })
             .then((res) => {
                 console.log(res.data)
@@ -101,6 +102,10 @@ function page() {
 
                     setBreadCrum(path_details);
 
+                }
+                else if (res.data.status_code === 5003 || res.data.status_code === 4005) {
+                    toast.error("Session expired. Please enter password again.")
+                    router.push(`/password/${params.fileHash ? params.fileHash as string : undefined}`)
                 }
                 else {
                     const currentError = ERROR_MAP[res.data.status_code];

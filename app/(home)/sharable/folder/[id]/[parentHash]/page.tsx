@@ -27,7 +27,7 @@ import ShareCard from '@/components/ShareCard'
 import { ERROR_MAP, SharableErrorType } from '@/data/ErrorStateData'
 import SharableError from '@/components/SharableError'
 import MoveOrCopyCard from '@/components/MoveOrCopyCard'
-
+import { useRouter } from 'next/navigation'
 interface FileFolderProps {
     id: number;
     author: string;
@@ -64,10 +64,10 @@ function page() {
     const params = useParams();
     const [userPermission, setUserPermission] = useState<string>("PUBLIC")
     const [error, setError] = useState<SharableErrorType | null>(null)
-    
-//  first call the access permissions API to get the user permissions for the current sharable link and then based on the permissions fetch the data and render the UI accordingly.
+    const router = useRouter()
+    //  first call the access permissions API to get the user permissions for the current sharable link and then based on the permissions fetch the data and render the UI accordingly.
 
-     const HandleGetAllFileFolderData = async () => {
+    const HandleGetAllFileFolderData = async () => {
         setEmpty(false)
         setHasData(false)
         setLoading(true)
@@ -78,7 +78,8 @@ function page() {
             .get(`${process.env.NEXT_PUBLIC_DOMAIN}/${getREQUEST}${secondIteration ? '&' : '?'}sharableUUID=${params.id ? params.id as string : undefined}&parentID=${params.parentHash ? params.parentHash as string : undefined}`, {
                 headers: {
                     authorization: `Bearer ${jwtToken}`,
-                }
+                },
+                withCredentials: true,
             })
             .then((res) => {
                 console.log(res.data)
@@ -118,13 +119,18 @@ function page() {
                     setBreadCrum(path_details);
 
                 }
+                else if (res.data.status_code === 5003 || res.data.status_code === 4005) {
+                    toast.error("Session expired. Please enter password again.")
+                    router.push(`/password/${params.parentHash ? params.parentHash as string : undefined}`)
+
+                }
                 else {
                     const currentError = ERROR_MAP[res.data.status_code];
                     if (currentError) {
                         setError(currentError);
                     } else {
                         toast.error("something went wrong while fetching the data")
-                    } 
+                    }
                 }
 
                 if (res.data.message.next_cursor != null) {
@@ -148,11 +154,11 @@ function page() {
 
     const handleRequestAccessPermissions = async () => {
         const jwtToken = await getToken()
-        axios.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharedFileFolder?sharableUUID=${params.id ? params.id as string : undefined}` , {} , {
-                headers: {
-                    authorization: `Bearer ${jwtToken}`,
-                },
-            })
+        axios.post(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/get/sharedFileFolder?sharableUUID=${params.id ? params.id as string : undefined}`, {}, {
+            headers: {
+                authorization: `Bearer ${jwtToken}`,
+            },
+        })
             .then((res) => {
                 console.log(res.data)
                 if (res.data.status_code === 5000) {
@@ -168,14 +174,14 @@ function page() {
                         setError(currentError);
                     } else {
                         toast.error("something went wrong while fetching the data")
-                    } 
+                    }
                 }
             })
             .catch((err) => {
                 console.log(err)
             })
     }
-   
+
     const GetUpdatedFileFolderData = async (id: number) => {
         setHasData(false)
         setLoading(true)
@@ -320,7 +326,7 @@ function page() {
                                             <div key={bread.folderID != null ? `${bread.folderID}-separator` : `${params.id ? params.id as string : undefined}-separator`} className='flex items-center gap-1'>
                                                 <BreadcrumbSeparator className='text-lg' />
                                                 <BreadcrumbItem >
-                                                    <BreadcrumbLink href={ bread.folderID != null ? `/sharable/folder/${params.id ? params.id as string : undefined}/${bread.folderID}` : `/sharable/folder/${params.id ? params.id as string : undefined}`}>
+                                                    <BreadcrumbLink href={bread.folderID != null ? `/sharable/folder/${params.id ? params.id as string : undefined}/${bread.folderID}` : `/sharable/folder/${params.id ? params.id as string : undefined}`}>
                                                         <h4 className='text-neutral-100 font-sans'>{bread.folderName}</h4>
                                                     </BreadcrumbLink>
                                                 </BreadcrumbItem>
@@ -405,9 +411,9 @@ function page() {
                     {
                         canEdit ? (
                             <div className='flex flex-col gap-2'>
-                                <FileUpload isRoot={true} shareUUID={params.id ? params.id as string: undefined} parentHash={params.parentHash ? params.parentHash as string:undefined} />
-                                <CreateFolder isRoot={false} shareUUID={params.id ? params.id as string: undefined} parentHash={params.parentHash ? params.parentHash as string:undefined} />
-                                <MoveOrCopyCard isShared={true} sharableUUID={params.id ? params.id as string: undefined}  sourceID={params.parentHash ? params.parentHash as string: undefined} type={'folder'} />
+                                <FileUpload isRoot={true} shareUUID={params.id ? params.id as string : undefined} parentHash={params.parentHash ? params.parentHash as string : undefined} />
+                                <CreateFolder isRoot={false} shareUUID={params.id ? params.id as string : undefined} parentHash={params.parentHash ? params.parentHash as string : undefined} />
+                                <MoveOrCopyCard isShared={true} sharableUUID={params.id ? params.id as string : undefined} sourceID={params.parentHash ? params.parentHash as string : undefined} type={'folder'} />
                             </div>
 
                         ) : (
@@ -416,7 +422,7 @@ function page() {
                     }
                     {
                         canShare ? (
-                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'}  childSharableHash={params.parentHash ? params.parentHash as string : null} isShared={true} isOwner={canDelete}/> // canDelete if true that means its owner
+                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'} childSharableHash={params.parentHash ? params.parentHash as string : null} isShared={true} isOwner={canDelete} /> // canDelete if true that means its owner
 
                         ) : (
                             <div></div>
