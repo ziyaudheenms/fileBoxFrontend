@@ -26,14 +26,14 @@ export function EmptyPage() {
                     ease: "easeInOut" // Smooth acceleration/deceleration
                 }}
             >
-                <div className="p-2 rounded-3xl bg-neutral-900 border border-neutral-800 shadow-lg">
-                    <IconNotesOff width={96} height={96} className="text-neutral-200 mx-auto" />
+                <div className="p-2 rounded-3xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 shadow-lg">
+                    <IconNotesOff width={96} height={96} className="text-neutral-400 dark:text-neutral-200 mx-auto" />
                 </div>
 
             </motion.div>
             <div>
-                <h2 className="text-2xl font-semibold mt-4 text-center text-neutral-200">No Files or Folders</h2>
-                <p className="text-neutral-400 font-sans font-light">You haven't created any files or folders yet.</p>
+                <h2 className="text-2xl font-semibold mt-4 text-center text-neutral-900 dark:text-neutral-200">No Files or Folders</h2>
+                <p className="text-neutral-500 dark:text-neutral-400 font-sans font-light">You haven't created any files or folders yet.</p>
             </div>
         </div>
     )

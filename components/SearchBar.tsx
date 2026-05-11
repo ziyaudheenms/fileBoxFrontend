@@ -35,9 +35,10 @@ interface SearchResult {
 
 interface props {
     scope? : string
+    closeToolsDrawer?: () => void
 }
 
-function SearchBar({scope} : props) {
+function SearchBar({ scope, closeToolsDrawer }: props) {
     const [query, setQuery] = useState<string | null>(null)
     const [loader, setLoader] = useState<Boolean>(false)
     const [getREQUEST, setGetREQUEST] = useState(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/search/`)
@@ -87,22 +88,22 @@ function SearchBar({scope} : props) {
 
     return (
         <div className='text-neutral-300'>
-            <Dialog>
+            <Dialog onOpenChange={(open) => { if (open && closeToolsDrawer) closeToolsDrawer(); }}>
                 <form className='w-full'>
                     <DialogTrigger asChild>
 
                         <div className='group relative flex justify-between items-center p-3 rounded-2xl 
-                bg-neutral-900/40 border border-neutral-800 
-                hover:border-red-900/50 hover:bg-neutral-800/50 
+                bg-neutral-50 dark:bg-neutral-900/40 border border-neutral-200 dark:border-neutral-800 
+                hover:border-red-900/50 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 
                 transition-all ease-out duration-300 
-                hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] 
+                hover:shadow-lg dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]
                 hover:-translate-y-1 cursor-pointer overflow-hidden' >
 
                             {/* 1. The Interaction Content */}
                             <div className='flex items-center gap-4'>
                                 {/* Icon Container with the 'Neon' Glow logic */}
-                                <div className='relative p-2.5 rounded-xl border border-neutral-800 
-                    group-hover:border-red-500/50 bg-neutral-950 
+                                <div className='relative p-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 
+                    group-hover:border-red-500/50 bg-neutral-100 dark:bg-neutral-950 
                     group-hover:scale-110 transition-all duration-500'>
 
                                     <IconSearch stroke={2} className='text-red-500 group-hover:text-red-400 z-10 relative' size={24} />
@@ -114,7 +115,7 @@ function SearchBar({scope} : props) {
 
                                 {/* Typography with tracking-tight for a modern look */}
                                 <div className='flex flex-col'>
-                                    <span className='font-figtree text-neutral-100 text-sm font-medium tracking-tight group-hover:text-white transition-colors'>
+                                    <span className='font-figtree text-neutral-900 dark:text-neutral-100 text-sm font-medium tracking-tight group-hover:text-black dark:group-hover:text-white transition-colors'>
                                         Search Your Files
                                     </span>
                                     <span className='font-sans text-neutral-500 text-xs'>
@@ -125,26 +126,26 @@ function SearchBar({scope} : props) {
 
                             {/* 2. The Keyboard Shortcut Hint (The 'Senior' touch) */}
                             <div className='flex items-center gap-1 opacity-40 group-hover:opacity-100 transition-opacity duration-300'>
-                                <kbd className="px-2 py-1 text-[10px] font-medium text-neutral-400 bg-neutral-800 border border-neutral-700 rounded-md">
+                                <kbd className="px-2 py-1 text-[10px] font-medium text-neutral-600 dark:text-neutral-400 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-md">
                                     ⌘ K
                                 </kbd>
                             </div>
 
                             {/* 3. Subtle Edge Highlight (The 'Ghost' Border) */}
-                            <div className='absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-neutral-700 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
+                            <div className='absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500' />
                         </div>
 
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-sm bg-neutral-950 border-2 border-neutral-800 text-nwutra">
+                    <DialogContent className="sm:max-w-sm bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-neutral-200 shadow-2xl">
                         <DialogHeader>
                             <div className="flex flex-col gap-1.5 py-4">
                                 {/* The Title: High contrast and bold */}
-                                <DialogTitle className='text-xl font-bold text-white font-figtree'>
+                                <DialogTitle className='text-xl font-bold text-black dark:text-white font-figtree'>
                                     Search Your <span className="text-red-600">Resources</span>
                                 </DialogTitle>
 
                                 {/* The Description: Muted, elegant, and perfectly spaced */}
-                                <DialogDescription className="text-neutral-400 font-sans text-sm leading-relaxed max-w-[90%]">
+                                <DialogDescription className="text-neutral-500 dark:text-neutral-400 font-sans text-sm leading-relaxed max-w-[90%]">
                                     Locate your files in seconds.
 
                                 </DialogDescription>
@@ -155,7 +156,7 @@ function SearchBar({scope} : props) {
                             {/* The Glow Effect (Background layer) */}
                             <div className="absolute -inset-0.5 bg-linear-to-r from-red-600 to-orange-600 rounded-xl blur opacity-0 group-focus-within:opacity-20 transition duration-500"></div>
 
-                            <div className="relative flex items-center bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300 group-focus-within:border-neutral-600 group-focus-within:bg-black shadow-2xl">
+                            <div className="relative flex items-center bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 rounded-xl overflow-hidden transition-all duration-300 group-focus-within:border-neutral-400 dark:group-focus-within:border-neutral-600 group-focus-within:bg-white dark:group-focus-within:bg-black shadow-lg dark:shadow-2xl">
 
                                 {/* Leading Icon */}
                                 <div className="pl-4 text-neutral-500 group-focus-within:text-red-500 transition-colors duration-300">
@@ -166,7 +167,7 @@ function SearchBar({scope} : props) {
                                 <input
                                     type="text"
                                     placeholder="Search your files..."
-                                    className="w-full bg-transparent border-none py-3 px-4 text-neutral-100 placeholder:text-neutral-500 focus:ring-0 focus:outline-none font-figtree text-sm"
+                                    className="w-full bg-transparent border-none py-3 px-4 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500 focus:ring-0 focus:outline-none font-figtree text-sm"
                                     value={query ? query : ''}
                                     onChange={(e) => {
                                         setQuery(e.target.value)
@@ -175,28 +176,28 @@ function SearchBar({scope} : props) {
 
                                 {/* Keyboard Shortcut Hint (Senior UI touch) */}
                                 <div className="pr-4 hidden sm:block">
-                                    <kbd className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-neutral-500 bg-neutral-800 border border-neutral-700 rounded-md">
+                                    <kbd className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-neutral-600 dark:text-neutral-500 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-md">
                                         <span className="text-xs">⌘</span>K
                                     </kbd>
                                 </div>
                             </div>
                         </div>
 
-                        <div className='flex flex-col gap-2 h-44 no-scrollbar overflow-y-scroll'>
+                        <div className='flex flex-col gap-2 h-44 no-scrollbar overflow-y-scroll mt-2'>
                             {
                                 result.map((item: SearchResult) => {
                                     return (
                                         <div className='group flex items-center justify-start gap-3 w-full p-2 
-                bg-neutral-900/40 border border-neutral-800 
-                hover:border-neutral-600 hover:bg-neutral-800/80 
-                hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
+                bg-white dark:bg-neutral-900/40 border border-neutral-200 dark:border-neutral-800 
+                hover:border-neutral-400 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 
+                hover:-translate-y-0.5 hover:shadow-md dark:hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]
                 rounded-xl transition-all duration-300 ease-out cursor-pointer' key={item.id} onClick={() => {
                     item.isfolder ?  router.push(`/dashboard/${item.id}`) : router.push(`/${item.type_of_file_folder}/${item.id}`);
                 }}>
 
                                             {/* Icon Container with glowing background effect on hover */}
                                             <div className='relative flex items-center justify-center p-2 rounded-lg 
-                  bg-neutral-950 border border-neutral-800 
+                  bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 
                   group-hover:scale-110 group-hover:border-red-500/30 
                   transition-all duration-300'>
                                                 {item.isfolder ? <IconFolder stroke={1.5} className='text-red-500 group-hover:text-red-400 z-10' size={28} /> : <IconFile stroke={1.5} className='text-red-500 group-hover:text-red-400 z-10' size={28} />}
@@ -204,13 +205,13 @@ function SearchBar({scope} : props) {
                                             </div>
 
                                             <div className='flex flex-col justify-center w-full min-w-0'>
-                                                <p className='text-neutral-200 font-medium font-figtree truncate group-hover:text-white transition-colors'>
+                                                <p className='text-neutral-900 dark:text-neutral-200 font-medium font-figtree truncate group-hover:text-black dark:group-hover:text-white transition-colors'>
                                                     {item.name}
                                                 </p>
 
                                                 {/* The Snippet: Using dangerouslySetInnerHTML to render our <mark> tags */}
                                                 <p
-                                                    className='text-neutral-500 font-sans text-xs truncate group-hover:text-neutral-400 transition-colors'
+                                                    className='text-neutral-500 font-sans text-xs truncate group-hover:text-neutral-600 dark:group-hover:text-neutral-400 transition-colors'
                                                     dangerouslySetInnerHTML={{ __html: item.snippet && item.snippet.length > 0 ? item.snippet : "No description found" }}
                                                 />
                                             </div>
@@ -225,13 +226,13 @@ function SearchBar({scope} : props) {
                                         {/* 1. Icon with Ambient Glow */}
                                         <div className="relative mb-6">
                                             <div className="absolute inset-0 bg-red-600/10 blur-3xl rounded-full" />
-                                            <div className="relative flex items-center justify-center w-20 h-20 bg-neutral-900 border border-neutral-800 rounded-2xl shadow-inner">
+                                            <div className="relative flex items-center justify-center w-20 h-20 bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl shadow-inner">
                                                 <IconFileSearch size={40} stroke={1.5} className="text-neutral-500 group-hover:text-red-500 transition-colors" />
                                             </div>
                                         </div>
 
                                         {/* 2. Text Hierarchy */}
-                                        <h3 className="text-xl font-figtree font-bold text-neutral-100 tracking-tight">
+                                        <h3 className="text-xl font-figtree font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">
                                             {query ? "No results found" : "Find your files"}
                                         </h3>
 
@@ -256,13 +257,13 @@ function SearchBar({scope} : props) {
 
                         </div>
 
-                        <DialogFooter className='flex justify-between'>
+                        <DialogFooter className='flex justify-between pt-4 border-t border-neutral-200 dark:border-neutral-800 mt-2'>
                             <DialogClose asChild>
-                                <Button className='group relative flex items-center gap-2.5 px-6 py-2.5 
-                   bg-neutral-900 border border-neutral-800 
-                   text-neutral-200 font-figtree font-medium 
+                                <Button className='group relative flex items-center justify-center gap-2.5 px-6 py-2.5 w-full sm:w-auto
+                   bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 
+                   text-neutral-900 dark:text-neutral-200 font-figtree font-medium 
                    rounded-xl transition-all duration-300 
-                   hover:border-red-800/60 hover:text-white 
+                   hover:border-red-800/60 hover:text-black dark:hover:text-white 
                    hover:-translate-y-0.5 
                    active:translate-y-0 active:scale-95
                    shadow-[0_1px_2px_rgba(0,0,0,0.1)] 

@@ -76,12 +76,12 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                 isGridLayout ? (
                     <div className="grid grid-cols-4 gap-4 py-5 ">
                         {folderFileData.map((item) => (
-                            <div key={item.id} className='group relative bg-neutral-900/40 backdrop-blur-md
-             border border-neutral-800 rounded-lg 
-             hover:border-red-600/50 hover:bg-neutral-800/50
+                            <div key={item.id} className='group relative bg-white dark:bg-neutral-900/40 backdrop-blur-md
+             border border-neutral-200 dark:border-neutral-800 rounded-lg 
+             hover:border-red-600/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/50
              hover:-translate-y-1.5 
              transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-             hover:shadow-[0_0_20px_rgba(220,38,38,0.15)]
+             hover:shadow-[0_0_15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_0_20px_rgba(220,38,38,0.15)]
              cursor-pointer overflow-hidden'>
                                 {
                                     item.isfolder ? (
@@ -122,19 +122,19 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                 }
 
 
-                                            <div className='h-40 bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
+                                            <div className='h-40 bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
                                                 <IconFolder stroke={2} height={90} width={90} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
                                             </div>
                                         </Link>
                                     ) : (
                                         <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `http://localhost:3000/images/${item.id}`} >
-                                            <div className={`h-40 bg-zinc-900 flex flex-col items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden relative group-hover:scale-110 transition-all duration-300 ease-out`}>
+                                            <div className={`h-40 bg-neutral-100 dark:bg-zinc-900 flex flex-col items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden relative group-hover:scale-110 transition-all duration-300 ease-out`}>
 
                                                 {
                                                     item.author == user?.username ? (
 
-                                                        <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-neutral-800/90 border-red-600  group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
-                                                            <h5 className='mb-1 text-neutral-100 font-light'>
+                                                        <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-white/90 dark:bg-neutral-800/90 border-red-600  group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
+                                                            <h5 className='mb-1 text-neutral-900 dark:text-neutral-100 font-light'>
                                                                 {item.file_extension}
                                                             </h5>
                                                         </div>
@@ -200,13 +200,13 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                 }
                                 <div className='flex flex-col pt-2 px-2'>
                                     <div className='flex items-center justify-between pb-2'>
-                                        <h1 className='text-md text-neutral-100 font-figtree font-medium'>{item.name.length > 30 ? item.name.slice(0, 30) : item.name} {item.name.length > 30 ? ("...") : (" ")}</h1>
+                                        <h1 className='text-md text-neutral-900 dark:text-neutral-100 font-figtree font-medium'>{item.name.length > 30 ? item.name.slice(0, 30) : item.name} {item.name.length > 30 ? ("...") : (" ")}</h1>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <IconDotsVertical stroke={2} height={20} width={20} className='text-neutral-400 hover:text-neutral-400' />
+                                                <IconDotsVertical stroke={2} height={20} width={20} className='text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-400 cursor-pointer' />
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-56 bg-neutral-950 text-neutral-400 border border-neutral-800" align="start">
-                                                <DropdownMenuLabel className='font-figtree text-neutral-100'>Details</DropdownMenuLabel>
+                                            <DropdownMenuContent className="w-56 bg-white dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800" align="start">
+                                                <DropdownMenuLabel className='font-figtree text-neutral-900 dark:text-neutral-100'>Details</DropdownMenuLabel>
                                                 <DropdownMenuGroup>
                                                     <DropdownMenuItem>
                                                         Name
@@ -261,10 +261,10 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                 ) : (
                     <div className="flex flex-col gap-4 py-5">
                         {folderFileData.map((item) => (
-                            <div key={item.id} className='group bg-neutral-900/40  border border-neutral-800 rounded-xl  flex items-center w-full group hover:border-red-900/50 transition-all duration-300 ease-out hover:-translate-y-1'>
+                            <div key={item.id} className='group bg-white dark:bg-neutral-900/40 border border-neutral-200 dark:border-neutral-800 rounded-xl flex items-center w-full hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-[0_0_20px_rgba(220,38,38,0.15)] hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:border-red-900/50 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden cursor-pointer'>
                                 {
                                     item.isfolder ? (
-                                        <div className='w-[30%] h-44 bg-zinc-900 flex items-center justify-center rounded-tl-xl rounded-bl-xl '>
+                                        <div className='w-[30%] h-44 bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center '>
                                             <Link href={`/dashboard/${item.id}`}>
                                                 <IconFolder stroke={2} height={90} width={90} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
                                             </Link>
@@ -272,28 +272,28 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                         </div>
                                     ) : (
                                         <Link href={`http://localhost:3000/images/1`} className='w-[30%] h-44'>
-                                            <div className={`w-full h-44 bg-zinc-900 flex items-center justify-center rounded-tl-xl rounded-bl-xl bg-[url(${item?.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden group-hover:scale-105 transition-all duration-300 ease-out relative`}>
-                                                <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-neutral-800/90 border-red-600  group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
-                                                    <h5 className='mb-1 text-neutral-100 font-light'>
+                                            <div className={`w-full h-44 bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center bg-[url(${item?.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden group-hover:scale-105 transition-all duration-300 ease-out relative`}>
+                                                <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-white/90 dark:bg-neutral-800/90 border-red-600 group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
+                                                    <h5 className='mb-1 text-neutral-900 dark:text-neutral-100 font-light'>
                                                         {item.file_extension}
                                                     </h5>
                                                 </div>
-                                                <Image src={item.file_url ? item.file_url : ''} alt={item.name} width={100} height={100} className='w-full' />
+                                                <Image src={item.file_url ? item.file_url : ''} alt={item.name} width={100} height={100} className='w-full object-cover min-h-full' />
                                             </div>
                                         </Link>
 
 
                                     )
                                 }
-                                <div className='flex flex-col py-2 px-2 w-[70%]'>
+                                <div className='flex flex-col py-2 px-4 w-[70%]'>
                                     <div className='flex items-center justify-between'>
-                                        <h1 className='text-lg text-neutral-100 font-figtree font-medium'>{item.name}</h1>
+                                        <h1 className='text-lg text-neutral-900 dark:text-neutral-100 font-figtree font-medium'>{item.name}</h1>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <IconDotsVertical stroke={2} height={20} width={20} className='text-neutral-400 hover:text-neutral-400' />
+                                                <IconDotsVertical stroke={2} height={20} width={20} className='text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-400 cursor-pointer' />
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-56 bg-neutral-950 text-neutral-400 border border-neutral-800" align="start">
-                                                <DropdownMenuLabel className='font-figtree text-neutral-100'>Details</DropdownMenuLabel>
+                                            <DropdownMenuContent className="w-56 bg-white dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800" align="start">
+                                                <DropdownMenuLabel className='font-figtree text-neutral-900 dark:text-neutral-100'>Details</DropdownMenuLabel>
                                                 <DropdownMenuGroup>
                                                     <DropdownMenuItem>
                                                         Name

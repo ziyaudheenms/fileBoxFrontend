@@ -39,14 +39,14 @@ function Navbar() {
       <header className="flex justify-between items-center py-6 px-4 gap-4  w-full ">
         <div className=' w-[90%] flex items-center justify-between '>
           <div>
-            <h1 className='text-neutral-200 font-figtree text-3xl font-bold'>Dashboard</h1>
-            <p className='text-neutral-400 font-sans font-light'>Manage and organize your files securely</p>
+            <h1 className='text-neutral-900 dark:text-neutral-200 font-figtree text-3xl font-bold'>Dashboard</h1>
+            <p className='text-neutral-500 dark:text-neutral-400 font-sans font-light'>Manage and organize your files securely</p>
           </div>
-          <div className=' border border-neutral-400 p-2 rounded-lg '>
-            <IconBellPlusFilled stroke={2} height={20} width={20} className='text-neutral-400' />
+          <div className=' border border-neutral-300 dark:border-neutral-800 bg-white dark:bg-transparent p-2 rounded-lg '>
+            <IconBellPlusFilled stroke={2} height={20} width={20} className='text-neutral-400 dark:text-neutral-400' />
           </div>
         </div>
-        <div className='flex justify-center items-center gap-2 border-l-2 border-neutral-600 px-2'>
+        <div className='flex justify-center items-center gap-2 border-l-2 border-neutral-300 dark:border-neutral-600 px-2'>
           <SignedOut>
             <button className="bg-blue-600 text-white py-1 px-3 rounded-lg  hover:cursor-pointer hover:opacity-80" onClick={() => {
               router.push("/sign-in")
@@ -61,8 +61,8 @@ function Navbar() {
           </SignedOut>
           <SignedIn>
             <div>
-              <h1 className='text-lg font-medium font-figtree text-neutral-200 text-left'>{user?.username}</h1>
-              <p className='text-sm font-sans text-neutral-400 text-right'>Free Plan</p>
+              <h1 className='text-lg font-medium font-figtree text-neutral-900 dark:text-neutral-200 text-left'>{user?.username}</h1>
+              <p className='text-sm font-sans text-neutral-500 dark:text-neutral-400 text-right'>Free Plan</p>
             </div>
             <UserButton />
           </SignedIn>

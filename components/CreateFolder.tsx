@@ -15,9 +15,10 @@ interface FolderCreateProps {
   folderID?: string;
   shareUUID?: string;
   parentHash?: string;
+  closeToolsDrawer?: () => void;
 }
 
-function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateProps) {
+function CreateFolder({ isRoot, folderID, shareUUID, parentHash, closeToolsDrawer }: FolderCreateProps) {
   const { getToken } = useAuth()
   const [upLoading, setUpLoading] = useState<Boolean | false>(false)
   const [folderName, setFolderName] = useState("")
@@ -98,20 +99,20 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateP
 
   return (
     <div>
-      <Dialog>
+      <Dialog onOpenChange={(open) => { if (open && closeToolsDrawer) closeToolsDrawer(); }}>
         <form>
           <DialogTrigger asChild>
 
 
 
-            <div className='group relative w-full px-4 py-3 bg-neutral-900/40 hover:bg-neutral-800/50 border border-neutral-800 
-                rounded-xl text-neutral-100 font-figtree font-bold text-md 
+            <div className='group relative w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-900/40 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 border border-neutral-200 dark:border-neutral-800 
+                rounded-xl text-neutral-900 dark:text-neutral-100 font-figtree font-bold text-md 
                 flex items-center gap-4 hover:border-red-900/50 
                 hover:-translate-y-1 transition-all duration-300 ease-out cursor-pointer'>
 
               {/* 1. Icon Container with "Pulse" logic */}
               <div className='relative flex items-center justify-center p-2.5 rounded-lg 
-                  bg-neutral-950 border border-neutral-800 
+                  bg-neutral-100 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 
                   group-hover:scale-110 group-hover:border-red-500/40 
                   group-hover:shadow-[0_0_15px_rgba(220,38,38,0.2)]
                   transition-all duration-500'>
@@ -124,7 +125,7 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateP
               </div>
 
               {/* 2. The Text with "Slide-in" motion */}
-              <span className='group-hover:translate-x-1 group-hover:text-white transition-all duration-300 ease-out font-figtree text-neutral-100 text-lg font-medium tracking-tight '>
+              <span className='group-hover:translate-x-1 group-hover:text-black dark:group-hover:text-white transition-all duration-300 ease-out font-figtree text-neutral-900 dark:text-neutral-100 text-lg font-medium tracking-tight '>
                 Create Folder
               </span>
 
@@ -136,15 +137,15 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateP
 
 
           </DialogTrigger>
-          <DialogContent className="w-full p-4 bg-neutral-950 text-neutral-400 border border-neutral-800 rounded-xl my-2">
+          <DialogContent className="w-full p-4 bg-white dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 rounded-xl my-2 shadow-2xl">
             <AlertDialogHeader >
-              <DialogTitle className='text-black'></DialogTitle>
+              <DialogTitle className='text-black dark:text-white'></DialogTitle>
             </AlertDialogHeader>
-            <div className="relative group w-full max-w-md ">
+            <div className="relative group w-full max-w-md mt-2 mb-4">
               {/* The Glow Effect (Background layer) */}
               <div className="absolute -inset-0.5 bg-linear-to-r from-red-600 to-orange-600 rounded-xl blur opacity-0 group-focus-within:opacity-20 transition duration-500"></div>
 
-              <div className="relative flex items-center bg-neutral-900 border border-neutral-800 rounded-xl overflow-hidden transition-all duration-300 group-focus-within:border-neutral-600 group-focus-within:bg-black shadow-2xl">
+              <div className="relative flex items-center bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 rounded-xl overflow-hidden transition-all duration-300 group-focus-within:border-neutral-400 dark:group-focus-within:border-neutral-600 group-focus-within:bg-white dark:group-focus-within:bg-black shadow-lg">
 
                 {/* Leading Icon */}
                 <div className="pl-4 text-neutral-500 group-focus-within:text-red-500 transition-colors duration-300">
@@ -155,25 +156,25 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateP
                 <input
                   type="text"
                   placeholder="Create New Folder"
-                  className="w-full bg-transparent border-none py-3 px-4 text-neutral-100 placeholder:text-neutral-500 focus:ring-0 focus:outline-none font-figtree text-sm"
+                  className="w-full bg-transparent border-none py-3 px-4 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-500 focus:ring-0 focus:outline-none font-figtree text-sm"
                   value={folderName} onChange={(e) => setFolderName(e.target.value)}
                 />
 
                 {/* Keyboard Shortcut Hint (Senior UI touch) */}
                 <div className="pr-4 hidden sm:block">
-                  <kbd className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-neutral-500 bg-neutral-800 border border-neutral-700 rounded-md">
+                  <kbd className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-neutral-600 dark:text-neutral-500 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-md">
                     <span className="text-xs">⌘</span>K
                   </kbd>
                 </div>
               </div>
             </div>
-            <DialogFooter className='m-2'>
+            <DialogFooter className='m-2 gap-2 sm:gap-0 mt-6'>
               <DialogClose asChild>
-                <Button className='group relative flex items-center gap-2.5 px-6 py-2.5 
-                   bg-neutral-900 border border-neutral-800 
-                   text-neutral-200 font-figtree font-medium 
+                <Button className='group relative flex items-center justify-center gap-2.5 px-6 py-2.5 
+                   bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 
+                   text-neutral-900 dark:text-neutral-200 font-figtree font-medium 
                    rounded-xl transition-all duration-300 
-                   hover:border-red-800/60 hover:text-white 
+                   hover:border-red-800/60 hover:text-black dark:hover:text-white 
                    hover:-translate-y-0.5 
                    active:translate-y-0 active:scale-95
                    shadow-[0_1px_2px_rgba(0,0,0,0.1)] 
@@ -197,11 +198,11 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash }: FolderCreateP
                   <span className='relative z-10'>Cancel</span>
                 </Button>
               </DialogClose>
-              <Button className='group relative flex items-center gap-2.5 px-6 py-2.5 
-                   bg-neutral-900 border border-neutral-800 
-                   text-neutral-200 font-figtree font-medium 
+              <Button className='group relative flex items-center justify-center gap-2.5 px-6 py-2.5 
+                   bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-800 
+                   text-neutral-900 dark:text-neutral-200 font-figtree font-medium 
                    rounded-xl transition-all duration-300 
-                   hover:border-red-800/60 hover:text-white 
+                   hover:border-red-800/60 hover:text-black dark:hover:text-white 
                    hover:-translate-y-0.5 
                    active:translate-y-0 active:scale-95
                    shadow-[0_1px_2px_rgba(0,0,0,0.1)] 
