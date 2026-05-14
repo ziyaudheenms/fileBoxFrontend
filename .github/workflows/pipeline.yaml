@@ -1,4 +1,4 @@
-name : CI - CD PIPELINE
+name: CI - CD PIPELINE
 
 on:
   push:
@@ -8,21 +8,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # These steps must be indented inside the 'build' job
     steps:
       - name: checkout code
-        uses: actions/checkout@v5
-  
+        uses: actions/checkout@v4
+
       - name: Set up Node js
-        uses: actions/setup-node@4
+        uses: actions/setup-node@v4
         with:
-            node-version: 20
-      
+          node-version: 20
+    
       - name: Install dependencies
         run: npm install
-  
+
       - name: Run tests
         run: npm test
-
-
-
-   
