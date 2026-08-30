@@ -12,7 +12,7 @@ import './globals.css'
 import { Toaster } from "@/components/ui/sonner"
 import StoreProvider from '@/providers/storeProvider'
 import { ThemeProvider } from "@/components/theme-provider"
-
+import { dark } from "@clerk/themes"
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -45,7 +45,19 @@ export default function RootLayout({
 
 {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+        variables: {
+          colorBackground: "#171717", // hex value for bg-neutral-900
+          colorInputBackground: "#262626", // hex value for bg-neutral-800
+          colorInputText: "#ffffff",
+          colorText: "#ffffff",
+          colorTextSecondary: "#a3a3a3",
+          borderRadius: "0.75rem",
+        },
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <body className={`${geistSans.variable} ${geistMono.variable} ${plusJakartaSans.variable} antialiased`}>
           <ThemeProvider

@@ -47,7 +47,7 @@ export const getAllFileFolders = createAsyncThunk<any , fileFolderFetchProps>(  
 
         }
         catch (err) {
-            return rejectWithValue(err);
+            
         }
     }
 )
