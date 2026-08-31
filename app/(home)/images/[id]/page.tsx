@@ -146,12 +146,12 @@ function page() {
                                                 </div>
                                             ) : (
                                                 <div className='relative w-full h-[280px] sm:h-[400px] md:h-[480px] lg:h-[560px] rounded-2xl border border-neutral-800 bg-neutral-900/40 backdrop-blur-md flex items-center justify-center p-3 shadow-2xl overflow-hidden'>
-                                                    <Image 
-                                                        src={singlePageData?.file_url} 
-                                                        alt={singlePageData?.name || 'Uploaded Image'} 
-                                                        fill 
+                                                    <Image
+                                                        src={singlePageData?.file_url}
+                                                        alt={singlePageData?.name || 'Uploaded Image'}
+                                                        fill
                                                         sizes="(max-width: 1024px) 100vw, 60vw"
-                                                        className='object-contain rounded-xl' 
+                                                        className='object-contain rounded-xl'
                                                         priority
                                                     />
                                                 </div>
