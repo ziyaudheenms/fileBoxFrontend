@@ -74,7 +74,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
         <div>
             {
                 isGridLayout ? (
-                    <div className="grid grid-cols-4 gap-4 py-5 ">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 py-5">
                         {folderFileData.map((item) => (
                             <div key={item.id} className='group relative bg-white dark:bg-neutral-900/40 backdrop-blur-md
              border border-neutral-200 dark:border-neutral-800 rounded-lg 
@@ -82,164 +82,140 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
              hover:-translate-y-1.5 
              transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
              hover:shadow-[0_0_15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_0_20px_rgba(220,38,38,0.15)]
-             cursor-pointer overflow-hidden'>
+             cursor-pointer overflow-hidden flex flex-col justify-between'>
                                 {
                                     item.isfolder ? (
-                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`}>
-                                            {
-                                                item.author == user?.username ? (
-                                                    <div></div>
-                                                ) : (
-                                                    <div className='absolute top-3 right-1'>
-                                                        <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
-                                                    </div>
-                                                )
-                                            }
-
-                                             {
-                                                    isFavoriteLoading && item.id == specificRecordID ?
-                                                        (
-                                                            <div className=' absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-12'>
-                                                                <FavoriteLoader />
-
-                                                            </div>
-
-                                                        ) : (
-                                                            <div></div>
-                                                        )
-                                                }
-
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`} className='block w-full'>
+                                            <div className='relative h-44 w-full bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center rounded-t-lg overflow-hidden'>
                                                 {
-                                                    item.is_favorite ? (
-                                                        <div className='absolute top-3 left-1 '>
-                                                            <IconHeartFilled stroke={1.5} className='text-pink-600 group-hover:scale-110 group-hover:translate-x-1.5 transition-all ease-out duration-300' />
-                                                        </div>
-                                                    ) : (
-                                                        <div>
-
-                                                        </div>
-                                                    )
-                                                }
-
-
-                                            <div className='h-40 bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center rounded-tl-lg rounded-tr-lg '>
-                                                <IconFolder stroke={2} height={90} width={90} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
-                                            </div>
-                                        </Link>
-                                    ) : (
-                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `http://localhost:3000/images/${item.id}`} >
-                                            <div className={`h-40 bg-neutral-100 dark:bg-zinc-900 flex flex-col items-center justify-center rounded-tl-lg rounded-tr-lg bg-[url(${item.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden relative group-hover:scale-110 transition-all duration-300 ease-out`}>
-
-                                                {
-                                                    item.author == user?.username ? (
-
-                                                        <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-white/90 dark:bg-neutral-800/90 border-red-600  group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
-                                                            <h5 className='mb-1 text-neutral-900 dark:text-neutral-100 font-light'>
-                                                                {item.file_extension}
-                                                            </h5>
-                                                        </div>
-                                                    ) : (
-                                                        <div className='absolute top-3 right-1'>
+                                                    item.author == user?.username ? null : (
+                                                        <div className='absolute top-3 right-2 z-10'>
                                                             <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
                                                         </div>
                                                     )
                                                 }
 
-
                                                 {
-                                                    isTrashLoading && item.id == specificRecordID ?
-                                                        (
-                                                            <div className=' absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
-                                                                <TrashLoader />
-
-                                                            </div>
-
-                                                        ) : (
-                                                            <div></div>
-                                                        )
-                                                }
-
-                                                {
-                                                    isFavoriteLoading && item.id == specificRecordID ?
-                                                        (
-                                                            <div className=' absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
-                                                                <FavoriteLoader />
-
-                                                            </div>
-
-                                                        ) : (
-                                                            <div></div>
-                                                        )
-                                                }
-
-
-                                                {
-                                                    item.is_favorite ? (
-                                                        <div className='absolute top-3 left-1 '>
-                                                            <IconHeartFilled stroke={1.5} className='text-pink-600 group-hover:scale-110 group-hover:translate-x-1.5 transition-all ease-out duration-300' />
+                                                    isFavoriteLoading && item.id == specificRecordID ? (
+                                                        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20'>
+                                                            <FavoriteLoader />
                                                         </div>
-                                                    ) : (
-                                                        <div>
+                                                    ) : null
+                                                }
 
+                                                {
+                                                    item.is_favorite && (
+                                                        <div className='absolute top-3 left-2 z-10'>
+                                                            <IconHeartFilled stroke={1.5} className='text-pink-600 group-hover:scale-110 group-hover:translate-x-0.5 transition-all ease-out duration-300' />
                                                         </div>
                                                     )
                                                 }
 
+                                                <IconFolder stroke={2} height={80} width={80} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
+                                            </div>
+                                        </Link>
+                                    ) : (
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `/images/${item.id}`} className='block w-full'>
+                                            <div className='relative h-44 w-full bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center rounded-t-lg overflow-hidden'>
+                                                {
+                                                    item.author == user?.username ? (
+                                                        <div className='absolute top-3 right-2 z-10 flex items-center justify-center h-6 px-2.5 rounded-full border bg-white/90 dark:bg-neutral-900/90 border-red-600/70 shadow-sm'>
+                                                            <span className='text-[11px] font-medium text-neutral-900 dark:text-neutral-100 uppercase tracking-wide'>
+                                                                {item.file_extension || 'IMG'}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className='absolute top-3 right-2 z-10'>
+                                                            <FileFolderBadge avatar={item.profile_image || '#'} username={item.author} />
+                                                        </div>
+                                                    )
+                                                }
+
+                                                {
+                                                    isTrashLoading && item.id == specificRecordID && (
+                                                        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20'>
+                                                            <TrashLoader />
+                                                        </div>
+                                                    )
+                                                }
+
+                                                {
+                                                    isFavoriteLoading && item.id == specificRecordID && (
+                                                        <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20'>
+                                                            <FavoriteLoader />
+                                                        </div>
+                                                    )
+                                                }
+
+                                                {
+                                                    item.is_favorite && (
+                                                        <div className='absolute top-3 left-2 z-10'>
+                                                            <IconHeartFilled stroke={1.5} className='text-pink-600 group-hover:scale-110 group-hover:translate-x-0.5 transition-all ease-out duration-300' />
+                                                        </div>
+                                                    )
+                                                }
 
                                                 {
                                                     item.upload_status == 'PENDING' || item.upload_status == 'PROCESSING' || item.upload_status == 'FAILED' ? (
                                                         <ImageProcessing parent='dashboard' />
+                                                    ) : item.file_url ? (
+                                                        <Image
+                                                            src={item.file_url}
+                                                            alt={item.name || 'image'}
+                                                            fill
+                                                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                                            className='object-cover group-hover:scale-105 transition-transform duration-500 ease-out'
+                                                        />
                                                     ) : (
-                                                        <Image src={item.file_url ? item.file_url : ''} alt={item.name} width={100} height={100} className='w-full' />
-
+                                                        <div className='w-full h-full flex items-center justify-center text-neutral-400 text-sm'>
+                                                            No Preview
+                                                        </div>
                                                     )
                                                 }
                                             </div>
                                         </Link>
                                     )
                                 }
-                                <div className='flex flex-col pt-2 px-2'>
-                                    <div className='flex items-center justify-between pb-2'>
-                                        <h1 className='text-md text-neutral-900 dark:text-neutral-100 font-figtree font-medium'>{item.name.length > 30 ? item.name.slice(0, 30) : item.name} {item.name.length > 30 ? ("...") : (" ")}</h1>
+                                <div className='flex flex-col pt-3 pb-2 px-3'>
+                                    <div className='flex items-center justify-between gap-2'>
+                                        <h1 className='text-sm text-neutral-900 dark:text-neutral-100 font-figtree font-medium truncate' title={item.name}>
+                                            {item.name}
+                                        </h1>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <IconDotsVertical stroke={2} height={20} width={20} className='text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-400 cursor-pointer' />
+                                                <div className='p-1 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex-shrink-0'>
+                                                    <IconDotsVertical stroke={2} height={18} width={18} className='text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200' />
+                                                </div>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent className="w-56 bg-white dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800" align="start">
                                                 <DropdownMenuLabel className='font-figtree text-neutral-900 dark:text-neutral-100'>Details</DropdownMenuLabel>
                                                 <DropdownMenuGroup>
                                                     <DropdownMenuItem>
                                                         Name
-                                                        <DropdownMenuShortcut className='text-blue-600 font-bold'>{item.name.length > 10 ? item.name.slice(0, 10) : item.name} {item.name.length > 10 ? ("...") : (" ")}</DropdownMenuShortcut>
+                                                        <DropdownMenuShortcut className='text-blue-600 font-bold truncate max-w-[120px]'>{item.name}</DropdownMenuShortcut>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem>
                                                         Size
-                                                        <DropdownMenuShortcut className='text-red-600 font-bold'>{item.size > 1024 ? `${(item.size / 1024).toFixed(2)} mb` : `${item.size} kb`}</DropdownMenuShortcut>
+                                                        <DropdownMenuShortcut className='text-red-600 font-bold'>
+                                                            {item.size > 1024 * 1024 ? `${(item.size / (1024 * 1024)).toFixed(2)} gb` : item.size > 1024 ? `${(item.size / 1024).toFixed(2)} mb` : `${item.size} kb`}
+                                                        </DropdownMenuShortcut>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem>
                                                         Type
                                                         <DropdownMenuShortcut className='text-green-600 font-bold'>{item.file_extension ? item.file_extension : "Folder"}</DropdownMenuShortcut>
                                                     </DropdownMenuItem>
                                                     {
-                                                        isTrashPage ? (
-                                                            <div></div>
-                                                        ) : (
-                                                            <DropdownMenuItem>
-                                                                <h1 onClick={() => HandleFavoriteUpdation(item.id)}>
-                                                                    {item.is_favorite ? ("Remove From Favorite") : ("Add To Favorite")}
-                                                                </h1>
+                                                        isTrashPage ? null : (
+                                                            <DropdownMenuItem onClick={() => HandleFavoriteUpdation(item.id)} className='cursor-pointer'>
+                                                                <span>{item.is_favorite ? "Remove From Favorite" : "Add To Favorite"}</span>
                                                                 <DropdownMenuShortcut>
                                                                     <IconFileStar stroke={2} className='text-neutral-500' />
                                                                 </DropdownMenuShortcut>
                                                             </DropdownMenuItem>
                                                         )
                                                     }
-                                                    <DropdownMenuItem>
-                                                        <h1 onClick={() => HandleTrashUpdation(item.id)}>
-                                                            {
-                                                                isTrashPage ? ("Restore From Trash") : ("Add To Trash")
-                                                            }
-                                                        </h1>
+                                                    <DropdownMenuItem onClick={() => HandleTrashUpdation(item.id)} className='cursor-pointer'>
+                                                        <span>{isTrashPage ? "Restore From Trash" : "Add To Trash"}</span>
                                                         <DropdownMenuShortcut>
                                                             <IconTrash stroke={2} className='text-neutral-500' />
                                                         </DropdownMenuShortcut>
@@ -248,106 +224,108 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                         <DeleteButton fileFolderID={shareUUID ? undefined : String(item.id)} shareUUID={shareUUID ? shareUUID : undefined} fileFolderHash={isShared ? String(item.id) : undefined} isDropDown={true} />
                                                     </DropdownMenuItem>
                                                 </DropdownMenuGroup>
-
-
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </div>
-
                                 </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-4 py-5">
+                    <div className="flex flex-col gap-3 py-5">
                         {folderFileData.map((item) => (
-                            <div key={item.id} className='group bg-white dark:bg-neutral-900/40 border border-neutral-200 dark:border-neutral-800 rounded-xl flex items-center w-full hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-[0_0_20px_rgba(220,38,38,0.15)] hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:border-red-900/50 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] overflow-hidden cursor-pointer'>
+                            <div key={item.id} className='group bg-white dark:bg-neutral-900/40 border border-neutral-200 dark:border-neutral-800 rounded-xl flex items-center w-full hover:-translate-y-0.5 hover:shadow-lg dark:hover:shadow-[0_0_20px_rgba(220,38,38,0.15)] hover:bg-neutral-50 dark:hover:bg-neutral-800/50 hover:border-red-900/50 transition-all duration-300 ease-out overflow-hidden cursor-pointer'>
                                 {
                                     item.isfolder ? (
-                                        <div className='w-[30%] h-44 bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center '>
-                                            <Link href={`/dashboard/${item.id}`}>
-                                                <IconFolder stroke={2} height={90} width={90} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300 ease-out' />
-                                            </Link>
-
-                                        </div>
-                                    ) : (
-                                        <Link href={`http://localhost:3000/images/1`} className='w-[30%] h-44'>
-                                            <div className={`w-full h-44 bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center bg-[url(${item?.file_url})] bg-center bg-no-repeat bg-cover overflow-hidden group-hover:scale-105 transition-all duration-300 ease-out relative`}>
-                                                <div className='absolute top-3 right-1 flex items-center justify-center h-6 px-2 rounded-xl border bg-white/90 dark:bg-neutral-800/90 border-red-600 group-hover:-translate-x-3.5 transition-all duration-100 ease-out group-hover:bg-red-500/50'>
-                                                    <h5 className='mb-1 text-neutral-900 dark:text-neutral-100 font-light'>
-                                                        {item.file_extension}
-                                                    </h5>
-                                                </div>
-                                                <Image src={item.file_url ? item.file_url : ''} alt={item.name} width={100} height={100} className='w-full object-cover min-h-full' />
-                                            </div>
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`} className='w-28 sm:w-36 md:w-44 h-28 sm:h-32 bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center flex-shrink-0'>
+                                            <IconFolder stroke={2} height={60} width={60} className='text-red-600/50 font-figtree group-hover:text-red-600 group-hover:scale-110 group-hover:-translate-y-0.5 transition-all duration-300 ease-out' />
                                         </Link>
-
-
+                                    ) : (
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `/images/${item.id}`} className='w-28 sm:w-36 md:w-44 h-28 sm:h-32 relative flex-shrink-0 bg-neutral-100 dark:bg-zinc-900 overflow-hidden'>
+                                            <div className='absolute top-2 right-2 z-10 flex items-center justify-center h-5 px-2 rounded-full border bg-white/90 dark:bg-neutral-900/90 border-red-600/70 shadow-sm'>
+                                                <span className='text-[10px] font-medium text-neutral-900 dark:text-neutral-100 uppercase tracking-wide'>
+                                                    {item.file_extension || 'IMG'}
+                                                </span>
+                                            </div>
+                                            {
+                                                item.upload_status == 'PENDING' || item.upload_status == 'PROCESSING' || item.upload_status == 'FAILED' ? (
+                                                    <ImageProcessing parent='dashboard' />
+                                                ) : item.file_url ? (
+                                                    <Image 
+                                                        src={item.file_url} 
+                                                        alt={item.name || 'image'} 
+                                                        fill 
+                                                        sizes="(max-width: 640px) 112px, 176px"
+                                                        className='object-cover group-hover:scale-105 transition-transform duration-300 ease-out' 
+                                                    />
+                                                ) : (
+                                                    <div className='w-full h-full flex items-center justify-center text-neutral-400 text-xs'>No Preview</div>
+                                                )
+                                            }
+                                        </Link>
                                     )
                                 }
-                                <div className='flex flex-col py-2 px-4 w-[70%]'>
-                                    <div className='flex items-center justify-between'>
-                                        <h1 className='text-lg text-neutral-900 dark:text-neutral-100 font-figtree font-medium'>{item.name}</h1>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <IconDotsVertical stroke={2} height={20} width={20} className='text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-400 cursor-pointer' />
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent className="w-56 bg-white dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800" align="start">
-                                                <DropdownMenuLabel className='font-figtree text-neutral-900 dark:text-neutral-100'>Details</DropdownMenuLabel>
-                                                <DropdownMenuGroup>
-                                                    <DropdownMenuItem>
-                                                        Name
-                                                        <DropdownMenuShortcut className='text-blue-600 font-bold'>Untited File</DropdownMenuShortcut>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem>
-                                                        Size
-                                                        <DropdownMenuShortcut className='text-red-600 font-bold'>100kb</DropdownMenuShortcut>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem>
-                                                        Type
-                                                        <DropdownMenuShortcut className='text-green-600 font-bold'>image/jpeg</DropdownMenuShortcut>
-                                                    </DropdownMenuItem>
-                                                    {
-                                                        isTrashPage ? (
-                                                            <div></div>
-                                                        ) : (
-                                                            <DropdownMenuItem>
-                                                                <h1 onClick={() => HandleFavoriteUpdation(item.id)}>
-                                                                    {item.is_favorite ? ("Remove From Favorite") : ("Add To Favorite")}
-                                                                </h1>
-                                                                <DropdownMenuShortcut>
-                                                                    <IconFileStar stroke={2} className='text-neutral-500' />
-                                                                </DropdownMenuShortcut>
-                                                            </DropdownMenuItem>
-                                                        )
-                                                    }
-                                                    <DropdownMenuItem>
-                                                        <h1 onClick={() => HandleTrashUpdation(item.id)}>
-                                                            {
-                                                                isTrashPage ? ("Restore From Trash") : ("Add To Trash")
-                                                            }
-                                                        </h1>
-                                                        <DropdownMenuShortcut>
-                                                            <IconTrash stroke={2} className='text-neutral-500' />
-                                                        </DropdownMenuShortcut>
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem>
-
-                                                        <DeleteButton fileFolderID={shareUUID ? undefined : String(item.id)} shareUUID={shareUUID ? shareUUID : undefined} fileFolderHash={isShared ? String(item.id) : undefined} isDropDown={true} />
-
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuGroup>
-
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                <div className='flex items-center justify-between py-3 px-4 flex-1 min-w-0'>
+                                    <div className='flex flex-col min-w-0 pr-4'>
+                                        <h1 className='text-sm sm:text-base text-neutral-900 dark:text-neutral-100 font-figtree font-medium truncate' title={item.name}>
+                                            {item.name}
+                                        </h1>
+                                        <span className='text-xs text-neutral-500 dark:text-neutral-400 mt-1'>
+                                            {item.file_extension ? `${item.file_extension} • ` : 'Folder • '}
+                                            {item.size > 1024 * 1024 ? `${(item.size / (1024 * 1024)).toFixed(2)} GB` : item.size > 1024 ? `${(item.size / 1024).toFixed(2)} MB` : `${item.size || 0} KB`}
+                                        </span>
                                     </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <div className='p-1.5 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer flex-shrink-0'>
+                                                <IconDotsVertical stroke={2} height={20} width={20} className='text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200' />
+                                            </div>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent className="w-56 bg-white dark:bg-neutral-950 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800" align="start">
+                                            <DropdownMenuLabel className='font-figtree text-neutral-900 dark:text-neutral-100'>Details</DropdownMenuLabel>
+                                            <DropdownMenuGroup>
+                                                <DropdownMenuItem>
+                                                    Name
+                                                    <DropdownMenuShortcut className='text-blue-600 font-bold truncate max-w-[120px]'>{item.name}</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Size
+                                                    <DropdownMenuShortcut className='text-red-600 font-bold'>
+                                                        {item.size > 1024 * 1024 ? `${(item.size / (1024 * 1024)).toFixed(2)} GB` : item.size > 1024 ? `${(item.size / 1024).toFixed(2)} MB` : `${item.size} KB`}
+                                                    </DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    Type
+                                                    <DropdownMenuShortcut className='text-green-600 font-bold'>{item.file_extension ? item.file_extension : "Folder"}</DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                {
+                                                    isTrashPage ? null : (
+                                                        <DropdownMenuItem onClick={() => HandleFavoriteUpdation(item.id)} className='cursor-pointer'>
+                                                            <span>{item.is_favorite ? "Remove From Favorite" : "Add To Favorite"}</span>
+                                                            <DropdownMenuShortcut>
+                                                                <IconFileStar stroke={2} className='text-neutral-500' />
+                                                            </DropdownMenuShortcut>
+                                                        </DropdownMenuItem>
+                                                    )
+                                                }
+                                                <DropdownMenuItem onClick={() => HandleTrashUpdation(item.id)} className='cursor-pointer'>
+                                                    <span>{isTrashPage ? "Restore From Trash" : "Add To Trash"}</span>
+                                                    <DropdownMenuShortcut>
+                                                        <IconTrash stroke={2} className='text-neutral-500' />
+                                                    </DropdownMenuShortcut>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    <DeleteButton fileFolderID={shareUUID ? undefined : String(item.id)} shareUUID={shareUUID ? shareUUID : undefined} fileFolderHash={isShared ? String(item.id) : undefined} isDropDown={true} />
+                                                </DropdownMenuItem>
+                                            </DropdownMenuGroup>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
                         ))}
                     </div>
                 )
             }
-
         </div>
     )
 }

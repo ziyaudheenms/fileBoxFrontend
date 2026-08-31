@@ -82,12 +82,12 @@ function UpdateMetaData({ fileID, sharableUUID, fileHash, type }: Props) {
 
 
     return (
-        <div className={`${type === 'folder' ? 'w-full' : 'w-[80%]'}  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg gap-4`}>
+        <div className='w-full flex flex-col justify-between border border-neutral-800 bg-neutral-900/40 backdrop-blur-md p-4 sm:p-5 rounded-2xl gap-4 shadow-xl'>
             <div className='flex flex-col gap-2'>
-                <div className='font-sans flex flex-col gap-1'>
-                    <h5 className='text-neutral-400'>Rename</h5>
-                    <InputGroup>
-                        <InputGroupInput placeholder="Rename the file" className="text-neutral-100 w-[7000px]" value={renameValue || ''} onChange={(e) => {
+                <div className='font-sans flex flex-col gap-1.5'>
+                    <h5 className='text-neutral-400 text-sm'>Rename</h5>
+                    <InputGroup className='w-full'>
+                        <InputGroupInput placeholder="Rename the file" className="text-neutral-100 w-full" value={renameValue || ''} onChange={(e) => {
                             setRenameValue(e.target.value)
                         }} />
                         <InputGroupAddon>
@@ -98,10 +98,10 @@ function UpdateMetaData({ fileID, sharableUUID, fileHash, type }: Props) {
             </div>
 
             <div className='flex flex-col gap-2'>
-                <div className='font-sans flex flex-col gap-1'>
-                    <h5 className='text-neutral-400'>Add Description</h5>
-                    <InputGroup>
-                        <InputGroupInput placeholder="add description you need" className="text-neutral-100 w-[7000px]" value={descriptionValue || ''} onChange={(e) => {
+                <div className='font-sans flex flex-col gap-1.5'>
+                    <h5 className='text-neutral-400 text-sm'>Add Description</h5>
+                    <InputGroup className='w-full'>
+                        <InputGroupInput placeholder="add description you need" className="text-neutral-100 w-full" value={descriptionValue || ''} onChange={(e) => {
                             setDescriptionValue(e.target.value);
                         }} />
                         <InputGroupAddon>
@@ -110,19 +110,17 @@ function UpdateMetaData({ fileID, sharableUUID, fileHash, type }: Props) {
                     </InputGroup>
                 </div>
             </div>
-            <div className='w-full py-2'>
-                <Button className='w-full font-figtree text-neutral-800 bg-neutral-100 font-medium text-lg hover:bg-neutral-400 hover:text-neutral-100' onClick={() => {
+            <div className='w-full pt-1'>
+                <Button className='w-full font-figtree text-neutral-900 bg-neutral-100 font-medium text-base hover:bg-neutral-300 transition-all active:scale-95 py-2.5 rounded-xl' onClick={() => {
                     HandleMetaDataSubmittion()
                 }}>
-
                     {
                         loading ? (
                             <InfiniteLoader />
                         ) : (
-                            <>
-                                <IconPencilCheck stroke={2} height={30} width={30} className='text-lg' />Update Info
-                            </>
-
+                            <span className='flex items-center justify-center gap-2'>
+                                <IconPencilCheck stroke={2} size={20} />Update Info
+                            </span>
                         )
                     }
                 </Button>

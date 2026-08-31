@@ -303,20 +303,18 @@ function page() {
     return (
         <div>
             <Navbar />
-            <div className='px-2 flex'>
+            <div className='px-2 flex flex-col lg:flex-row pb-6 lg:pb-0'>
                 {/* MAIN SECTION THAT LISTS ALL THE FOLDER/FILES THAT EXISTS */}
 
-                <div className='w-[73%] px-2 py-2 h-screen overflow-y-scroll no-scrollbar'>
-                    <div className='w-full flex items-center justify-between '>
+                <div className='w-full lg:w-[73%] xl:w-[75%] px-2 py-2 h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar'>
+                    <div className='w-full flex items-center justify-between gap-2 flex-wrap'>
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink href={`/dashboard`}>
-                                        <div className='flex  gap-1'>
-
+                                        <div className='flex gap-1'>
                                             <IconHome stroke={2} height={20} width={20} className='text-neutral-100' />
                                             <h4 className='text-neutral-100 font-sans'>Home</h4>
-
                                         </div>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
@@ -338,7 +336,7 @@ function page() {
                         </Breadcrumb>
                         <div className='flex items-center gap-2'>
                             <InputGroup>
-                                <InputGroupInput placeholder="Search..." className='placeholder:text-neutral-400  text-neutral-100' />
+                                <InputGroupInput placeholder="Search..." className='placeholder:text-neutral-400 text-neutral-100' />
                                 <InputGroupAddon>
                                     <SearchIcon />
                                 </InputGroupAddon>
@@ -365,7 +363,7 @@ function page() {
                             </div>
                         </div>
                     </div>
-                    <div className='w-full flex items-center gap-2'>
+                    <div className='w-full flex items-center gap-2 mt-2'>
                         <h3 className='font-sans text-neutral-100 text-sm'>All Items</h3>
                         <span className='text-xs font-sans text-neutral-400 bg-neutral-900 px-2 py-1 rounded-lg'>{FileFolderData.length}</span>
                     </div>
@@ -404,7 +402,7 @@ function page() {
                 </div>
                 {/* ADDITIONAL DETAILS RIGHT SECTION ALONG WITH UPLOAD OPTIONS */}
 
-                <div className='w-[27%] px-2 py-2 flex flex-col gap-3 h-screen overflow-y-scroll no-scrollbar'>
+                <div className='w-full lg:w-[27%] xl:w-[25%] px-2 py-2 flex flex-col gap-3 h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar'>
 
                     {/*UPLOAD OPTIONS */}
 
@@ -422,8 +420,7 @@ function page() {
                     }
                     {
                         canShare ? (
-                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'} childSharableHash={params.parentHash ? params.parentHash as string : null} isShared={true} isOwner={canDelete} /> // canDelete if true that means its owner
-
+                            <ShareCard UUID={params.id ? params.id as string : null} type={'folder'} childSharableHash={params.parentHash ? params.parentHash as string : null} isShared={true} isOwner={canDelete} />
                         ) : (
                             <div></div>
                         )

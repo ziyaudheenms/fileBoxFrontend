@@ -206,42 +206,42 @@ function MoveOrCopyCard({ sourceID, type, isShared, sharableUUID }: { sourceID: 
     }
 
     return (
-        <div className={` ${type == 'file' ? 'w-[80%]' : 'w-full'} py-2 flex gap-2 font-figtree`}>
-            <Dialog>
-                <form className='w-full'>
-                    <DialogTrigger asChild>
-                        {
-                            isShared ? (
-                                <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'><IconCopy stroke={2} onClick={() => {
-                                    getAvailableFilesFolders(null)
-                                }}/>Make A Copy</Button>
-
-                            ) : (
-                                <Button className='w-full font-figtree text-neutral-100 bg-neutral-950 font-medium border border-neutral-800 text-lg hover:bg-neutral-800 hover:text-neutral-100'><IconCopy stroke={2} />Move / Copy</Button>
-
-                            )
-                        }
-
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-sm bg-neutral-950 border-2 border-neutral-800 text-nwutra">
+        <div className='w-full'>
+            <Dialog onOpenChange={(open) => {
+                if (open) {
+                    getAvailableFilesFolders(null);
+                }
+            }}>
+                <DialogTrigger asChild>
+                    <div
+                        onClick={() => {
+                            getAvailableFilesFolders(null)
+                        }}
+                        className='group relative w-full px-4 py-3 bg-neutral-900/40 hover:bg-neutral-800/50 border border-neutral-800 rounded-xl text-neutral-100 font-figtree font-bold text-md flex items-center gap-4 hover:border-red-900/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer'
+                    >
+                        <div className='relative flex items-center justify-center p-2.5 rounded-lg bg-neutral-950 border border-neutral-800 group-hover:scale-110 group-hover:border-red-500/40 transition-all'>
+                            <IconCopy className='text-red-500' size={24} />
+                        </div>
+                        <span className='group-hover:translate-x-1 transition-transform'>
+                            {isShared ? 'Make A Copy' : 'Move / Copy'}
+                        </span>
+                    </div>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md bg-neutral-950/95 backdrop-blur-xl border border-neutral-800 p-6 rounded-2xl shadow-2xl">
                         <DialogHeader>
-                            <div className="w-full rounded-md text-neutral-400 flex items-center hover:cursor-pointer">
+                            <div className="w-full p-1 bg-neutral-900/60 border border-neutral-800 rounded-xl flex items-center hover:cursor-pointer mb-2">
                                 {
-                                    isShared ? (
-                                        <div></div>
-                                    ) : (
+                                    isShared ? null : (
                                         <>
-                                            <div className={`w-[50%] text-center ${moveOrCopy == 'MOVE' ? 'bg-neutral-300' : 'bg-neutral-900'} p-1 rounded-md ${moveOrCopy == 'MOVE' ? 'text-black' : 'text-neutral-100'}`} onClick={() => {
+                                            <div className={`w-[50%] py-1.5 text-center text-sm font-medium transition-all duration-200 rounded-lg ${moveOrCopy == 'MOVE' ? 'bg-red-600 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`} onClick={() => {
                                                 setMoveOrCopy('MOVE')
                                             }}>MOVE</div>
-                                            <div className={`w-[50%] text-center ${moveOrCopy == 'COPY' ? 'bg-neutral-300' : 'bg-neutral-900'} p-1 rounded-md ${moveOrCopy == 'COPY' ? 'text-black' : 'text-neutral-100'} `} onClick={() => {
+                                            <div className={`w-[50%] py-1.5 text-center text-sm font-medium transition-all duration-200 rounded-lg ${moveOrCopy == 'COPY' ? 'bg-red-600 text-white shadow-md' : 'text-neutral-400 hover:text-neutral-200'}`} onClick={() => {
                                                 setMoveOrCopy('COPY')
                                             }}>COPY</div>
                                         </>
                                     )
                                 }
-
-
                             </div>
                             {
                                 isShared ? (
@@ -357,41 +357,35 @@ function MoveOrCopyCard({ sourceID, type, isShared, sharableUUID }: { sourceID: 
                             <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap text-sm">make it root</span>
                         </div>
 
-                        <DialogFooter className='flex justify-between'>
-
+                        <DialogFooter className='flex justify-between items-center gap-3 pt-4 border-t border-neutral-800/80'>
                             <DialogClose asChild>
-                                <Button variant="outline" className='flex items-center gap-2'  ><IconRowRemove stroke={2} />Cancel</Button>
+                                <Button className='group relative flex items-center gap-2 px-5 py-2 bg-neutral-900 border border-neutral-800 text-neutral-200 font-figtree font-medium rounded-xl transition-all duration-300 hover:border-red-800/60 hover:text-white hover:-translate-y-0.5 active:scale-95'>
+                                    <IconRowRemove stroke={1.5} size={18} className='text-neutral-500 group-hover:text-red-400 transition-colors' />
+                                    <span>Cancel</span>
+                                </Button>
                             </DialogClose>
-
 
                             {
                                 moveOrCopy == 'MOVE' ? (
-                                    <Button onClick={() => {
+                                    <Button className='group relative flex items-center gap-2 px-5 py-2 bg-red-600/90 hover:bg-red-600 text-white font-figtree font-medium rounded-xl transition-all duration-300 hover:-translate-y-0.5 active:scale-95 shadow-md shadow-red-950/50' onClick={() => {
                                         HandleMoveOperation(false)
                                     }}>
                                         {
-                                            loading ? <InfiniteLoader /> : <span className='flex items-center gap-2'><IconFolder stroke={2} height={5} width={5} />Move</span>
+                                            loading ? <InfiniteLoader /> : <span className='flex items-center gap-2'><IconFolder stroke={2} size={18} />Move</span>
                                         }
-
                                     </Button>
                                 ) : (
-                                    <Button onClick={() => {
+                                    <Button className='group relative flex items-center gap-2 px-5 py-2 bg-red-600/90 hover:bg-red-600 text-white font-figtree font-medium rounded-xl transition-all duration-300 hover:-translate-y-0.5 active:scale-95 shadow-md shadow-red-950/50' onClick={() => {
                                         HandleCopyOperation(false)
                                     }}>
                                         {
-                                            loading ? <InfiniteLoader /> : <span className='flex items-center gap-2'><IconCopy stroke={2} height={5} width={5} />Copy</span>
+                                            loading ? <InfiniteLoader /> : <span className='flex items-center gap-2'><IconCopy stroke={2} size={18} />Copy</span>
                                         }
-
                                     </Button>
                                 )
                             }
-
-
-
-
                         </DialogFooter>
                     </DialogContent>
-                </form>
             </Dialog>
 
         </div>

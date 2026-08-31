@@ -32,14 +32,8 @@ function layout({ children }: { children: React.ReactNode }) {
             <SideBarNavItems type={"library"} />
 
             {/* Theme Toggle */}
-            <div className="flex-shrink-0 items-center md:mt-auto md:mb-4 px-2 flex justify-center lg:justify-start">
-              <div className="md:hidden flex items-center justify-center p-2 mt-1">
-                <ThemeToggle />
-              </div>
-              <div className="hidden md:flex items-center gap-3 mt-4">
-                <ThemeToggle />
-                <span className="hidden lg:block text-sm font-medium text-neutral-500 dark:text-neutral-400">Theme Toggle</span>
-              </div>
+            <div className="flex-shrink-0 md:mt-auto md:mb-3 px-1 flex items-center justify-center w-full">
+              <ThemeToggle />
             </div>
           </div>
 

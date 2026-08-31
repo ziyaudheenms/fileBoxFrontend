@@ -60,10 +60,10 @@ function page() {
     return (
         <div>
             <Navbar />
-            <div className='px-2 flex'>
+            <div className='px-2 flex flex-col lg:flex-row pb-6 lg:pb-0'>
                 {/* MAIN SECTION THAT LISTS ALL THE FOLDER/FILES THAT EXISTS */}
 
-                <div className='w-[73%] px-2 py-2 h-screen overflow-y-scroll no-scrollbar'>
+                <div className='w-full lg:w-[73%] xl:w-[75%] px-2 py-2 h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar'>
                     <div className='w-full flex items-center justify-between '>
                         <Breadcrumb>
                             <BreadcrumbList>
@@ -147,7 +147,7 @@ function page() {
                 </div>
                 {/* ADDITIONAL DETAILS RIGHT SECTION ALONG WITH UPLOAD OPTIONS */}
 
-                <div className='w-[27%] px-2 py-2 flex flex-col gap-3 h-screen overflow-y-scroll no-scrollbar'>
+                <div className='w-full lg:w-[27%] xl:w-[25%] px-2 py-2 flex flex-col gap-3 h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar'>
                     {/*UPLOAD OPTIONS */}
                     <SearchBar />
 

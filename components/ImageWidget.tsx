@@ -58,95 +58,92 @@ interface ImageWidgetConfigurePros  {
 function ImageWidget({isPreview , fileHash , sharableUUID , userPermission , fileFolderData , canShare , canDelete , canEdit} : ImageWidgetConfigurePros) {
     
     return (
-            <div className='flex w-full  h-screen overflow-y-scroll no-scrollbar py-2 px-2'>
-                {
-                    fileFolderData.file_url ? (
-                        <div className='w-[60%] flex justify-center items-center h-full px-5 relative'>
-                            
-                            <Image src={fileFolderData?.file_url} height={500} width={500} alt='Uploaded Image in a big view' className=' w-full h-fit absolute top-0 left-0 right-0' />
-                              
+        <div className='flex flex-col lg:flex-row w-full h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar py-4 px-2 sm:px-4 gap-6 pb-24 lg:pb-6'>
+            {
+                fileFolderData.file_url ? (
+                    <div className='w-full lg:w-[60%] flex justify-center items-center px-2 sm:px-4'>
+                        <div className='relative w-full max-w-2xl h-[320px] sm:h-[450px] lg:h-[560px] rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-900/30 backdrop-blur-md flex items-center justify-center p-2 shadow-2xl'>
+                            <Image 
+                                src={fileFolderData.file_url} 
+                                alt={fileFolderData.name || 'Uploaded Image'} 
+                                fill 
+                                sizes="(max-width: 1024px) 100vw, 60vw"
+                                className='object-contain rounded-xl p-2' 
+                                priority
+                            />
                         </div>
-                    ) :
-                        <InfiniteLoader />
-                }
-
-                <div className='w-[40%]'>
-                    <div className='w-full flex flex-col items-center justify-center gap-2 '>
-                        <div className='w-[80%] h-96  flex flex-col justify-between border-2 p-4  border-neutral-800 rounded-lg'>
-                            <div className='flex flex-col gap-2'>
-                                <div className='font-sans flex items-center justify-between'>
-                                    <h5 className='text-neutral-400'>Name</h5>
-                                    <h5 className='text-neutral-100'>{fileFolderData.name}</h5>
-                                </div>
-                                <div className='font-sans flex items-center justify-between'>
-                                    <h5 className='text-neutral-400'>Size</h5>
-                                    <h5 className='text-neutral-100'>
-                                        {(() => {
-                                            const size = fileFolderData.size;
-                                            if (typeof size !== 'number' || isNaN(size)) return '';
-                                            if (size >= 1024 * 1024) {
-                                                return (size / (1024 * 1024)).toFixed(2) + ' GB';
-                                            } else if (size >= 1024) {
-                                                return (size / 1024).toFixed(2) + ' MB';
-                                            } else {
-                                                return size + ' KB';
-                                            }
-                                        })()}
-                                    </h5>
-                                </div>
-                                <div className='font-sans flex items-center justify-between'>
-                                    <h5 className='text-neutral-400'>Uploaded At</h5>
-                                    <h5 className='text-neutral-100'>{getRelativeTime(fileFolderData.uploaded_at)}</h5>
-                                </div>
-                                <div className='font-sans flex items-center justify-between'>
-                                    <h5 className='text-neutral-400'>Type</h5>
-                                    <h5 className='text-neutral-100'>{fileFolderData.file_extension}</h5>
-                                </div>
-                            </div>
-
-                            <div className='w-full pb-2 pt-5 border-t-2 border-t-neutral-800'>
-                                <Download fileName={fileFolderData.name} fileUrl={fileFolderData.file_url} />
-                                <div className='w-full py-2 flex gap-2 font-figtree'>
-                                    {
-                                        canShare ? (
-                                            <>
-                                                <ShareCard UUID={sharableUUID} childSharableHash={fileHash} type={'image'} isShared={true} isOwner={canDelete}/> //if can delete is true that means its owner
-                                                {
-                                                    canDelete ? (
-                                                        <Button className='w-[30%] bg-neutral-950 border border-neutral-800 hover:bg-red-600'>
-                                                            <IconCopyX stroke={2} className='text-red-900 ' height={30} width={30} />
-                                                        </Button>
-                                                    ) : (
-                                                        <div></div>
-                                                    )
-                                                }
-
-                                            </>
-                                        ) : (
-                                            <div></div>
-                                        )
-                                    }
-
-                                </div>
-                            </div>
-
-                        </div>
-                        {
-                            canEdit ? (
-                                <>
-                                    <UpdateMetaData fileHash={fileHash} sharableUUID={sharableUUID}/>
-                                    <MoveOrCopyCard sourceID={fileHash} type={'file'} isShared={true} sharableUUID={sharableUUID}/>
-
-                                </>
-                            ) : (
-                                <div></div>
-                            )
-                        }
-
-
                     </div>
+                ) : (
+                    <div className='w-full lg:w-[60%] flex justify-center items-center min-h-[300px]'>
+                        <InfiniteLoader />
+                    </div>
+                )
+            }
+
+            <div className='w-full lg:w-[40%] flex flex-col items-center justify-start gap-4'>
+                <div className='w-full sm:w-[90%] lg:w-[85%] flex flex-col justify-between border border-neutral-800 p-4 sm:p-5 bg-neutral-900/40 backdrop-blur-md rounded-2xl shadow-xl'>
+                    <div className='flex flex-col gap-3'>
+                        <div className='font-sans flex items-center justify-between gap-2'>
+                            <h5 className='text-neutral-400 text-sm'>Name</h5>
+                            <h5 className='text-neutral-100 text-sm font-medium truncate max-w-[200px]' title={fileFolderData.name}>{fileFolderData.name}</h5>
+                        </div>
+                        <div className='font-sans flex items-center justify-between'>
+                            <h5 className='text-neutral-400 text-sm'>Size</h5>
+                            <h5 className='text-neutral-100 text-sm font-medium'>
+                                {(() => {
+                                    const size = fileFolderData.size;
+                                    if (typeof size !== 'number' || isNaN(size)) return '';
+                                    if (size >= 1024 * 1024) {
+                                        return (size / (1024 * 1024)).toFixed(2) + ' GB';
+                                    } else if (size >= 1024) {
+                                        return (size / 1024).toFixed(2) + ' MB';
+                                    } else {
+                                        return size + ' KB';
+                                    }
+                                })()}
+                            </h5>
+                        </div>
+                        <div className='font-sans flex items-center justify-between'>
+                            <h5 className='text-neutral-400 text-sm'>Uploaded At</h5>
+                            <h5 className='text-neutral-100 text-sm font-medium'>{getRelativeTime(fileFolderData.uploaded_at)}</h5>
+                        </div>
+                        <div className='font-sans flex items-center justify-between'>
+                            <h5 className='text-neutral-400 text-sm'>Type</h5>
+                            <h5 className='text-neutral-100 text-sm font-medium uppercase'>{fileFolderData.file_extension}</h5>
+                        </div>
+                    </div>
+
+                    <div className='w-full pb-1 pt-5 border-t border-neutral-800/80 mt-4'>
+                        <Download fileName={fileFolderData.name} fileUrl={fileFolderData.file_url} />
+                        <div className='w-full py-2 flex items-center gap-2 font-figtree mt-2'>
+                            {
+                                canShare ? (
+                                    <>
+                                        <ShareCard UUID={sharableUUID} childSharableHash={fileHash} type={'image'} isShared={true} isOwner={canDelete} />
+                                        {
+                                            canDelete ? (
+                                                <Button className='w-[30%] bg-neutral-950 border border-neutral-800 hover:bg-red-600'>
+                                                    <IconCopyX stroke={2} className='text-red-900' height={24} width={24} />
+                                                </Button>
+                                            ) : null
+                                        }
+                                    </>
+                                ) : null
+                            }
+                        </div>
+                    </div>
+
                 </div>
+                {
+                    canEdit ? (
+                        <div className='w-full sm:w-[90%] lg:w-[85%] flex flex-col gap-3'>
+                            <UpdateMetaData fileHash={fileHash} sharableUUID={sharableUUID} type='image' />
+                            <MoveOrCopyCard sourceID={fileHash} type={'file'} isShared={true} sharableUUID={sharableUUID} />
+                        </div>
+                    ) : null
+                }
             </div>
+        </div>
     )
 }
 

@@ -61,9 +61,9 @@ function page() {
     return (
         <div>
             <Navbar />
-            <div className='px-2 flex'>
+            <div className='px-2 flex flex-col lg:flex-row pb-6 lg:pb-0'>
                 {/* MAIN SECTION THAT LISTS ALL THE FOLDER/FILES THAT EXISTS */}
-                <div className='w-[73%] px-2 py-2 h-screen overflow-y-scroll no-scrollbar'>
+                <div className='w-full lg:w-[73%] xl:w-[75%] px-2 py-2 h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar'>
                     <div className='w-full flex items-center justify-between '>
                         <div className='flex  gap-1'>
                             <IconHome stroke={2} height={20} width={20} className='text-neutral-100' />

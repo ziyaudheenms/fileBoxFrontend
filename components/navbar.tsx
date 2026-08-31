@@ -36,33 +36,33 @@ function Navbar() {
   const router = useRouter();
   return (
     <div>
-      <header className="flex justify-between items-center py-6 px-4 gap-4  w-full ">
-        <div className=' w-[90%] flex items-center justify-between '>
-          <div>
-            <h1 className='text-neutral-900 dark:text-neutral-200 font-figtree text-3xl font-bold'>Dashboard</h1>
-            <p className='text-neutral-500 dark:text-neutral-400 font-sans font-light'>Manage and organize your files securely</p>
+      <header className="flex justify-between items-center py-4 sm:py-6 px-3 sm:px-4 gap-2 sm:gap-4 w-full">
+        <div className='flex-1 min-w-0 flex items-center justify-between gap-2 mr-2'>
+          <div className='min-w-0'>
+            <h1 className='text-neutral-900 dark:text-neutral-200 font-figtree text-xl sm:text-3xl font-bold truncate'>Dashboard</h1>
+            <p className='text-neutral-500 dark:text-neutral-400 font-sans font-light text-xs sm:text-sm truncate'>Manage and organize your files securely</p>
           </div>
-          <div className=' border border-neutral-300 dark:border-neutral-800 bg-white dark:bg-transparent p-2 rounded-lg '>
-            <IconBellPlusFilled stroke={2} height={20} width={20} className='text-neutral-400 dark:text-neutral-400' />
+          <div className='border border-neutral-300 dark:border-neutral-800 bg-white dark:bg-transparent p-1.5 sm:p-2 rounded-lg flex-shrink-0'>
+            <IconBellPlusFilled stroke={2} height={18} width={18} className='text-neutral-400 dark:text-neutral-400' />
           </div>
         </div>
-        <div className='flex justify-center items-center gap-2 border-l-2 border-neutral-300 dark:border-neutral-600 px-2'>
+        <div className='flex justify-center items-center gap-2 border-l-2 border-neutral-300 dark:border-neutral-600 pl-2 sm:px-2 flex-shrink-0'>
           <SignedOut>
-            <button className="bg-blue-600 text-white py-1 px-3 rounded-lg  hover:cursor-pointer hover:opacity-80" onClick={() => {
+            <button className="bg-blue-600 text-white text-xs sm:text-sm py-1 px-2 sm:px-3 rounded-lg hover:cursor-pointer hover:opacity-80" onClick={() => {
               router.push("/sign-in")
             }}>
               Sign In
             </button>
-            <button className="bg-black text-white py-1 px-3 rounded-lg hover:cursor-pointer hover:opacity-80" onClick={() => {
+            <button className="bg-black text-white text-xs sm:text-sm py-1 px-2 sm:px-3 rounded-lg hover:cursor-pointer hover:opacity-80" onClick={() => {
               router.push("/sign-up")
             }}>
               Sign Up
             </button>
           </SignedOut>
           <SignedIn>
-            <div>
-              <h1 className='text-lg font-medium font-figtree text-neutral-900 dark:text-neutral-200 text-left'>{user?.username}</h1>
-              <p className='text-sm font-sans text-neutral-500 dark:text-neutral-400 text-right'>Free Plan</p>
+            <div className='hidden sm:block text-right'>
+              <h1 className='text-sm sm:text-base font-medium font-figtree text-neutral-900 dark:text-neutral-200 truncate max-w-[120px]'>{user?.username}</h1>
+              <p className='text-xs font-sans text-neutral-500 dark:text-neutral-400'>Free Plan</p>
             </div>
             <UserButton />
           </SignedIn>

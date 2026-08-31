@@ -101,7 +101,7 @@ function Settings({ fileFolderID }: { fileFolderID: string | undefined }) {
 
 
   return (
-    <div className='w-[80%]'>
+    <div className='w-full'>
       <Dialog>
         <DialogTrigger asChild>
           {/* Keep your existing trigger, it's already well-styled */}
