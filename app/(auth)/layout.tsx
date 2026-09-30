@@ -1,12 +1,9 @@
 import React from 'react'
 
-function layout({children} : {children: React.ReactNode}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <h1 className='text-xl text-blue-500'>Auth Layout</h1>
+    <div className="min-h-screen w-full bg-background text-foreground">
       {children}
     </div>
   )
-}
-
-export default layout
+}
