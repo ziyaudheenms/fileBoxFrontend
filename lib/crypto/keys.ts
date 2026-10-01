@@ -6,8 +6,6 @@
 // 2. Derive the Key Encryption Key (KEK) using Argon2 via crypto_pwhash
 // 3. Generating the Public key and the private key for the user
 
-
-
 import { getSodium } from "@/lib/sodium";
 
 // Generate Master Key is used to generate the Master key
@@ -21,7 +19,6 @@ export async function generateMasterKey(): Promise<Uint8Array | null> {
     }
 }
 
-
 // this handle function is used to generate the asymmetric key pairs.
 export async function generateAsymmetricKeyPair(): Promise<{ publicKey: Uint8Array; privateKey: Uint8Array } | null> {
     try {
@@ -33,7 +30,6 @@ export async function generateAsymmetricKeyPair(): Promise<{ publicKey: Uint8Arr
         return null;
     }
 }
-
 
 // Handles the generation of the Key Encryption Key (KEK) using Argon2 via crypto_pwhash
 // //1, we need to genetate a salt and store it in the DB
@@ -57,7 +53,6 @@ export async function deriveKeyEncryptionKey(password: string, salt: Uint8Array)
         return null;
     }
 }
-
 
 // NEXT WE HAVE TO ENCRYPT THE MASTER KEY WITTH THIS KEYENCRYPTIONKEY GENERATED FROM THE PASSOWRD
 // nonce is generated for the encryption of the master key, so that the master key encrypted will be different each time we encrypt them
@@ -84,3 +79,48 @@ export async function decryptMasterKey(encryptedMasterKey: Uint8Array, nonce: Ui
     }
 }
 
+//function which that is used to encrypt the private key using the KEK generated from the password and the nonce stored in the DB
+export async function encryptPrivateKey(privateKey: Uint8Array, kek: Uint8Array): Promise<{ nonce: Uint8Array; encryptedPrivateKey: Uint8Array } | null> {
+    try {
+        const sodium = await getSodium();
+        const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+        const encryptedPrivateKey = sodium.crypto_secretbox_easy(privateKey, nonce, kek);
+        return { nonce, encryptedPrivateKey };
+    } catch (error) {
+        console.error("Failed to encrypt private key:", error);
+        return null;
+    }
+}
+
+export async function decryptPrivateKey(encryptedPrivateKey: Uint8Array, nonce: Uint8Array, kek: Uint8Array): Promise<Uint8Array | null> {
+    try {
+        const sodium = await getSodium();
+        return sodium.crypto_secretbox_open_easy(encryptedPrivateKey, nonce, kek);
+    } catch (error) {
+        console.error("Failed to decrypt private key:", error);
+        return null;
+    }
+}
+
+// ---------------------------------------HELPER FUNCTION TO CONVERT Uint8 to and fro with Base64 -------------------------------------------------
+
+export async function toBase64(data: Uint8Array): Promise<string | null> {
+    try{
+        const sodium = await getSodium();
+        return sodium.to_base64(data);
+    } catch (error) {
+        console.error("Failed to encode base64:", error);
+        return null;
+    }
+    
+}
+
+export async function fromBase64(base64Str: string): Promise<Uint8Array | null> {
+    try {
+        const sodium = await getSodium();
+        return sodium.from_base64(base64Str);
+    } catch (error) {
+        console.error("Failed to decode base64:", error);
+        return null;
+    }
+}
