@@ -24,7 +24,10 @@ import {
 } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { getSodium } from '@/lib/sodium'  //used to load the Wasm version of libsodium asynchronously for cryptographic operations
-
+import { cryptoResponce } from '@/data/crypto'
+import { cryptoUserRegistration } from '@/lib/crypto/registration'
+import { sessionVault } from '@/lib/crypto/session-vault'
+import { persistSessionKeys } from '@/lib/crypto/sessionPersistance'
 
 
 export default function SignUpPage() {
@@ -45,7 +48,7 @@ export default function SignUpPage() {
 
   useEffect(() => {
     getSodium().then(() => setReady(true))   /// ensuring that the Wasm version of the libsodium library is fully loaded.
-  }, []) 
+  }, [])
 
 
   const signupFeatures = [
@@ -125,25 +128,56 @@ export default function SignUpPage() {
         })
         toast.success('Account created successfully! Welcome aboard.')
 
-        try {
-          const jwtToken = await getToken()
-          if (process.env.NEXT_PUBLIC_DOMAIN) {
-            await axios.post(
-              `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/createUser/`,
-              {},
-              {
-                headers: {
-                  authorization: `Bearer ${jwtToken}`,
-                  'Content-Type': 'application/json',
+
+
+        //Actually the clerk registration is completed and the user is set as logged in...
+
+        // once the clerk Authentication is successfull we have to do the crypto registration
+        const registration = await cryptoUserRegistration(password)
+
+
+        if (!registration) {
+          console.error("Opss!!! cant complete the crypto registration.....")
+        }
+        else {
+          const {payload , freshSession} = registration
+          sessionVault.setKeys(freshSession.masterKey, freshSession.privateKey, freshSession.publicKey) // used to store the required variables in the in-memmory.
+          
+          try {
+            // here since the clerk session is verified as logged in, all the required data which that is used to create the record in the backend is analyzed from the reuest using clerk python SDK
+            const jwtToken = await getToken()
+            if (process.env.NEXT_PUBLIC_DOMAIN) {
+              await axios.post(
+                `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/createUser/`,
+                { 
+                  payload: payload  // passing the crypto payload data which that we need
                 },
-              }
-            )
+                {
+                  headers: {
+                    authorization: `Bearer ${jwtToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                }
+              )
+            }
+
+            await persistSessionKeys(
+              freshSession.masterKey,
+              freshSession.privateKey,
+            );
+
+
+          } catch (apiError) {
+            console.error('API createUser error:', apiError)
           }
-        } catch (apiError) {
-          console.error('API createUser error:', apiError)
+
+          router.push('/dashboard')
+
         }
 
-        router.push('/dashboard')
+
+
+
       } else {
         console.error('Sign-up status incomplete:', signUpAttempt?.status)
         toast.error('Verification could not be completed. Please try again.')

@@ -27,21 +27,6 @@
 import { getSodium } from "@/lib/sodium";
 import { generateMasterKey, deriveKeyEncryptionKey, generateAsymmetricKeyPair, encryptMasterKey, encryptPrivateKey, toBase64 } from "@/lib/crypto/keys";
 
-// interface cryptoResponce {
-//     payload: {
-//         salt: string,
-//         publicKey: string,
-//         encryptedMasterKey: string,
-//         encryptedPrivateKey: string,
-//         masterkeyNonce: string,
-//         privateKeyNonce: string
-//     },
-//     freshSession: {
-//         masterKey: Uint8Array,
-//         publicKey: Uint8Array,
-//         privateKey: Uint8Array
-//     }
-// }
 
 export async function cryptoUserRegistration(password: string)  {
     const sodium = await getSodium()
