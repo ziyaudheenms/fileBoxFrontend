@@ -28,10 +28,11 @@ import { cryptoResponce } from '@/data/crypto'
 import { cryptoUserRegistration } from '@/lib/crypto/registration'
 import { sessionVault } from '@/lib/crypto/session-vault'
 import { persistSessionKeys } from '@/lib/crypto/sessionPersistance'
-
+import { useClerk } from '@clerk/nextjs'
 
 export default function SignUpPage() {
   const { isLoaded, signUp, setActive } = useSignUp()
+  const { signOut } = useClerk()
   const { getToken } = useAuth()
   const router = useRouter()
 
@@ -126,30 +127,24 @@ export default function SignUpPage() {
         await setActive({
           session: signUpAttempt.createdSessionId,
         })
-        toast.success('Account created successfully! Welcome aboard.')
-
-
 
         //Actually the clerk registration is completed and the user is set as logged in...
-
         // once the clerk Authentication is successfull we have to do the crypto registration
         const registration = await cryptoUserRegistration(password)
 
 
         if (!registration) {
-          console.error("Opss!!! cant complete the crypto registration.....")
+          toast.error("Opss!!! cant complete the crypto registration.....")
         }
         else {
-          const {payload , freshSession} = registration
-          sessionVault.setKeys(freshSession.masterKey, freshSession.privateKey, freshSession.publicKey) // used to store the required variables in the in-memmory.
-          
+          const { payload, freshSession } = registration
           try {
             // here since the clerk session is verified as logged in, all the required data which that is used to create the record in the backend is analyzed from the reuest using clerk python SDK
             const jwtToken = await getToken()
             if (process.env.NEXT_PUBLIC_DOMAIN) {
               await axios.post(
                 `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/createUser/`,
-                { 
+                {
                   payload: payload  // passing the crypto payload data which that we need
                 },
                 {
@@ -161,21 +156,23 @@ export default function SignUpPage() {
               )
             }
 
+            sessionVault.setKeys(freshSession.masterKey, freshSession.privateKey, freshSession.publicKey) // used to store the required variables in the in-memmory.
+            
             await persistSessionKeys(
               freshSession.masterKey,
               freshSession.privateKey,
             );
 
+            toast.success('Account created successfully! Welcome aboard.')
+            router.push('/dashboard')
 
           } catch (apiError) {
             console.error('API createUser error:', apiError)
+            sessionVault.clear() // clearing the sessionVault for safty
+            await signOut()  // signing out from the clerk so that 
           }
 
-          router.push('/dashboard')
-
         }
-
-
 
 
       } else {
