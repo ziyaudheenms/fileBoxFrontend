@@ -50,7 +50,7 @@ export async function cryptoUserRegistration(password: string)  {
     const masterKey = await generateMasterKey()
     const keyPair = await generateAsymmetricKeyPair()
 
-    const salt = sodium.randombytes_buf(sodium.crypto_pwhash_SALTBYTES);
+    const salt = sodium.randombytes_buf(sodium.crypto_pwhash_SALTBYTES);   // Uint8 array salt is generated that has to be stored in the DB
     const kek = await deriveKeyEncryptionKey(password, salt)
 
     if (masterKey && keyPair && kek) {
@@ -83,5 +83,4 @@ export async function cryptoUserRegistration(password: string)  {
         console.error('some error! cant load master key or key pair oe kek')
         return null
     }
-    
 }
