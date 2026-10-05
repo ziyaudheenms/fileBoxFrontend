@@ -135,6 +135,7 @@ export default function SignUpPage() {
 
         if (!registration) {
           toast.error("Opss!!! cant complete the crypto registration.....")
+          toast.info("trying again to initiate the cryto registration process")
         }
         else {
           const { payload, freshSession } = registration
