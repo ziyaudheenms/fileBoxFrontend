@@ -14,10 +14,11 @@ interface Payload {
     encryptedMasterKey: string,
     encryptedPrivateKey: string,
     masterkeyNonce: string,
-    privateKeyNonce: string
+    privateKeyNonce: string,
+    publicKey: string
 }
 
-export async function loginCryptoSesions(payload: Payload): Promise<{ masterKey: Uint8Array; privateKey: Uint8Array } | null> {
+export async function loginCryptoSesions(payload: Payload): Promise<{ masterKey: Uint8Array; privateKey: Uint8Array; publicKey: Uint8Array | null } | null> {
     try {
         // Type conversion process (Base64 string -> Uint8Array)
         const Uint8EncryptedMasterKey = await fromBase64(payload.encryptedMasterKey);
@@ -52,6 +53,7 @@ export async function loginCryptoSesions(payload: Payload): Promise<{ masterKey:
         return {
             masterKey: decryptedMasterKey,
             privateKey: decryptedPrivateKey,
+            publicKey: await fromBase64(payload.publicKey)  //converting the base64 string into the Uint8 array for our workflow.
         };
 
     } catch (error) {

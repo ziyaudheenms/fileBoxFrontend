@@ -18,6 +18,7 @@ import StorageUpdate from '@/components/StorageUpdate'
 import SearchBar from '@/components/SearchBar'
 import { useAppDispatch , useAppSelector } from '@/lib/redux/hooks'
 import { getAllFileFolders, handleFavoriteFileFolderUpdate, handleFileFolderTrashUpdate } from '@/features/FileFoldersSlice'
+import { sessionVault } from '@/lib/crypto/session-vault'
 
 interface StorageStatusProps {
   id: number;
@@ -49,6 +50,8 @@ function page() {
 
   useEffect(() => {
     getFileFolders(null , false)
+    const masterKey = sessionVault.getMasterKey()
+    console.log(masterKey)
   }, [])
 
   return (
