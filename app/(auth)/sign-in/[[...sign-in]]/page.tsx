@@ -1,10 +1,10 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useSignIn } from '@clerk/nextjs'
+import { useSignIn, useAuth } from '@clerk/nextjs'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -18,17 +18,39 @@ import {
   KeyRound,
   LockKeyhole,
   CheckCircle2,
-  Smartphone,
-  ShieldAlert,
 } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
+import axios from 'axios'
+import { loginCryptoSesions } from '@/lib/crypto/loginFlow'
+import { sessionVault } from '@/lib/crypto/session-vault'
+import { persistSessionKeys } from '@/lib/crypto/sessionPersistance'
+import { useClerk } from '@clerk/nextjs'
 
 type SecondFactorStrategy = 'phone_code' | 'totp' | 'backup_code'
 
 export default function SignInPage() {
+
+
+  const { signOut } = useClerk()
+
+  // THIS USEEFFECT IS FOR CLEANING THE CLERK SESSION TRACKING SINCE WE ARE BUILDING ENCRYPTED SYSTEM EACH TIME THE USER OPENS THE APP FROM BROWSER THAY HAVE TO LOGINNNN
+  useEffect(() => {
+    // Automatically sign out any lingering session when entering the login page
+    const clearLingeringSession = async () => {
+      try {
+        await signOut()
+        sessionVault.clear() // clearing the sessionVault for safty
+      } catch (err) {
+        console.info('clerk session is clear.')
+      }
+    }
+    clearLingeringSession()
+  }, [signOut])
+
+
   const { isLoaded, signIn, setActive } = useSignIn()
   const router = useRouter()
-
+  const { getToken } = useAuth()
   // Form states
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -41,6 +63,60 @@ export default function SignInPage() {
   const [isSecondFactor, setIsSecondFactor] = useState(false)
   const [selectedStrategy, setSelectedStrategy] = useState<SecondFactorStrategy>('totp')
   const [availableSecondFactors, setAvailableSecondFactors] = useState<any[]>([])
+
+
+  const getTheCryptoSession = async () => {
+    try {
+      const jwtToken = await getToken()
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/auth/security-sessions/`,
+        {
+          headers: {
+            authorization: `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      if (res.data.status_code === 5000) {
+        const sessionData = res.data.data
+
+        // generating the payload to pass to our login flow
+        const payload = {
+          password: password,
+          salt: sessionData.key_encryption_key_salt,
+          encryptedMasterKey: sessionData.user_encrypted_master_key,
+          encryptedPrivateKey: sessionData.user_encrypted_private_key,
+          masterkeyNonce: sessionData.user_encrypted_master_key_nonce,
+          privateKeyNonce: sessionData.user_encrypted_private_key_nonce,
+          publicKey: sessionData.user_public_key,
+        }
+
+        const loggedInSession = await loginCryptoSesions(payload)
+
+        if (loggedInSession == null) {
+          toast.info("Cant complete the login with the crypto")
+          return
+        }
+
+        sessionVault.setKeys(loggedInSession.masterKey, loggedInSession.privateKey, sessionData.user_public_key) // used to store the required variables in the in-memmory.
+
+        await persistSessionKeys(
+          loggedInSession.masterKey,
+          loggedInSession.privateKey,
+        );
+
+        toast.success('Logged In successfully !')
+        router.push('/dashboard')
+
+      } else {
+        toast.info(res.data.message)
+      }
+    } catch (error) {
+      console.error('Error fetching crypto session:', error)
+      toast.error('Failed to initialize security session.')
+    }
+  }
 
   const signinFeatures = [
     {
@@ -80,8 +156,10 @@ export default function SignInPage() {
       if (signInAttempt.status === 'complete') {
         await setActive({ session: signInAttempt.createdSessionId })
         toast.success('Welcome back! Vault unlocked.')
-        router.push('/dashboard')
+        // WE HAVE TO ACCESS THE LOGIN CRYPTO FUNCTION HERE
+        await getTheCryptoSession()
       } else if (signInAttempt.status === 'needs_second_factor') {
+
         const factors = signInAttempt.supportedSecondFactors || []
         setAvailableSecondFactors(factors)
 
@@ -89,6 +167,7 @@ export default function SignInPage() {
         const hasPhone = factors.some((f) => f.strategy === 'phone_code')
 
         let defaultStrat: SecondFactorStrategy = 'totp'
+
         if (hasTotp) {
           defaultStrat = 'totp'
         } else if (hasPhone) {
@@ -137,7 +216,8 @@ export default function SignInPage() {
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId })
         toast.success('Second-factor verification successful! Vault unlocked.')
-        router.push('/dashboard')
+        // LOGIN CRYPTO FUNCTION HANDLING
+        await getTheCryptoSession()
       } else {
         console.error('Second factor verification status:', result.status)
         toast.error(`Verification status: ${result.status}`)
@@ -188,6 +268,7 @@ export default function SignInPage() {
       }
     }
   }
+
 
   return (
     <div className="relative min-h-screen w-full flex flex-col lg:flex-row bg-background selection:bg-red-500/20">
