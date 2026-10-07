@@ -102,6 +102,90 @@ export async function decryptPrivateKey(encryptedPrivateKey: Uint8Array, nonce: 
     }
 }
 
+export async function generateCollectionKey(): Promise<{ collectionKey: Uint8Array } | null> {
+    try {
+        const sodium = await getSodium();
+        return { collectionKey: sodium.crypto_secretbox_keygen() };
+    } catch (error) {
+        console.error("Failed to generate collection key:", error);
+        return null;
+    }
+}
+
+
+export async function encryptCollectionKey(
+    collectionKey: Uint8Array,
+    masterKey: Uint8Array
+): Promise<{ encryptedCollectionKey: Uint8Array; nonce: Uint8Array } | null> {
+    try {
+        const sodium = await getSodium();
+        const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+        const encryptedCollectionKey = sodium.crypto_secretbox_easy(collectionKey, nonce, masterKey);
+        return { encryptedCollectionKey, nonce };
+    } catch (error) {
+        console.error("Failed to encrypt collection key:", error);
+        return null;
+    }
+}
+
+export async function decryptCollectionKey(
+    encryptedCollectionKey: Uint8Array,
+    nonce: Uint8Array,
+    masterKey: Uint8Array
+): Promise<Uint8Array | null> {
+    try {
+        const sodium = await getSodium();
+        return sodium.crypto_secretbox_open_easy(encryptedCollectionKey, nonce, masterKey);
+    } catch (error) {
+        console.error("Failed to decrypt collection key:", error);
+        return null;
+    }
+}
+
+export async function generateFileKey(): Promise<{ fileKey: Uint8Array } | null> {
+    try {
+        const sodium = await getSodium();
+        return { fileKey: sodium.crypto_secretbox_keygen() };
+    } catch (error) {
+        console.error("Failed to generate file key:", error);
+        return null;
+    }
+}
+
+export async function encryptFileKey(
+    fileKey: Uint8Array,
+    collectionKey: Uint8Array
+): Promise<{ encryptedFileKey: Uint8Array; nonce: Uint8Array } | null> {
+    try {
+        const sodium = await getSodium();
+        const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+        const encryptedFileKey = sodium.crypto_secretbox_easy(fileKey, nonce, collectionKey);
+        return { encryptedFileKey, nonce };
+    } catch (error) {
+        console.error("Failed to encrypt file key:", error);
+        return null;
+    }
+}
+
+export async function decryptFileKey(
+    encryptedFileKey: Uint8Array,
+    nonce: Uint8Array,
+    collectionKey: Uint8Array
+): Promise<Uint8Array | null> {
+    try {
+        const sodium = await getSodium();
+        return sodium.crypto_secretbox_open_easy(encryptedFileKey, nonce, collectionKey);
+    } catch (error) {
+        console.error("Failed to decrypt file key:", error);
+        return null;
+    }
+}
+
+
+
+
+
+
 // ---------------------------------------HELPER FUNCTION TO CONVERT Uint8 to and fro with Base64 -------------------------------------------------
 
 export async function toBase64(data: Uint8Array): Promise<string | null> {
