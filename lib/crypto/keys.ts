@@ -181,7 +181,78 @@ export async function decryptFileKey(
     }
 }
 
+export async function encryptFileContent(
+    file: File,
+    encryptionKey: Uint8Array
+): Promise<{encryptedFile: Blob, header:Uint8Array} | null> {
+    // here for the file content encryption we are using the stream encryption techniqu where we encrypt the stream of data instead of treating it in the goooo.
+    try {
+        const sodium = await getSodium()
 
+        // first we have to check the length of the key that is used for the encryption if it supports the stream Encryption or not
+        if (encryptionKey.length != sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES) {
+            console.log(`we require a size of ${sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES} bytes but got a size of ${encryptionKey.length}bytes and its invalid!!`)
+            return null
+        }
+
+        // next we have to generate the core thing for the entire encryption and decryption and that is the header and states
+
+        const stateAndHeader = sodium.crypto_secretstream_xchacha20poly1305_init_push(encryptionKey)  //state and header based on the given encryptionKey will be generated.
+        // header --> header is used for intializing the nonce and the salt for the entire file encryption through streams and it is reuired for the decryption engine too, header contains the initialization metadata and salt for the stream.
+        // state --> mean while state is used for the security purpose of the encrypion , state is used to identify the order in which the streams are arragned, which means it prevents the attacks like changing the order oof streams or manuplating the total no of streams
+        const { header, state } = stateAndHeader
+
+        const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB chunks
+        const encryptedChunks: Uint8Array[] = [header] // the encrypted chunks collection should be initalized with the header, as it is the entry point.
+
+        let offset = 0 // this variable is used to track the no of bytes / size that which is being encrypted.
+
+        // we have to look through the chunks and perform the required encryptions.
+        while (offset < file.size) {
+            const isLastChunk = (offset + CHUNK_SIZE) >= file.size // tracking whether its the last.
+            //now we have to cut the chunks into the parts as we need
+            const blobsize = file.slice(offset, offset + CHUNK_SIZE)
+
+            // Next we have to load this file into binary and then load it into array buffer of Uint8
+
+            const arrayBuffer = await blobsize.arrayBuffer()
+            const Uint8chunk = new Uint8Array(arrayBuffer)
+
+            // Now for true utilization of state, we have to assign tags with each stream with a special tag for the last stream so that the encryption can understand where does the stream ends and can prevent ffrom the truncation attacks.
+            const tag = isLastChunk
+                ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL   // TAG_FINAL hepls is identifying the last chunk so to determine how many chunks are there.
+                : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
+            
+            // Now using all these data we have to encrypt each streams
+            const encryptedBlock = sodium.crypto_secretstream_xchacha20poly1305_push(
+                state,
+                Uint8chunk,
+                null, // Additional optional unencrypted data (AD)
+                tag
+            );
+
+            // we have to append this encrypted chunk into the main chunck we initalized with header and adjust the offset
+            encryptedChunks.push(encryptedBlock)  // only push and pop is allwed in the js/ts arrays 
+            offset += CHUNK_SIZE
+
+        }
+
+        // Combine all chunks into a single Blob
+        const encryptedFile = new Blob(encryptedChunks as BlobPart[], { type: 'application/octet-stream' });
+        
+        return {
+            encryptedFile,
+            header // Returning the raw Uint8Array header as well
+        };
+
+
+    }
+    catch (e) {
+        console.log('some kind of error occureed')
+        console.error(e)
+        return null
+    }
+}
 
 
 
@@ -189,14 +260,14 @@ export async function decryptFileKey(
 // ---------------------------------------HELPER FUNCTION TO CONVERT Uint8 to and fro with Base64 -------------------------------------------------
 
 export async function toBase64(data: Uint8Array): Promise<string | null> {
-    try{
+    try {
         const sodium = await getSodium();
         return sodium.to_base64(data);
     } catch (error) {
         console.error("Failed to encode base64:", error);
         return null;
     }
-    
+
 }
 
 export async function fromBase64(base64Str: string): Promise<Uint8Array | null> {
