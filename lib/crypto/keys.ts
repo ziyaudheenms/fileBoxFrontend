@@ -259,12 +259,15 @@ export async function encryptFileMetadata(
     metadata: {
         name: string,
         fileType: string,
-        fileUrl: string
+        fileUrl: string,
+        decription: string, 
     }
 ): Promise<{ encryptedFileMetadata: Uint8Array; nonce: Uint8Array } | null> {
     try {
         const sodium = await getSodium();
+        // we have to convert the object into the JSON string
         const jsonString = JSON.stringify(metadata);
+        // the JSON converted string is converted into Uint8 array.
         const uint8MetaData = new TextEncoder().encode(jsonString);
         const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
         const encryptedFileMetadata = sodium.crypto_secretbox_easy(uint8MetaData, nonce, encryptionKey);
@@ -277,7 +280,51 @@ export async function encryptFileMetadata(
 }
 
 
+export async function decryptFileMetadata(
+    encryptedMetaData: string,
+    nonce: string,
+    encryptionKey: Uint8Array
+): Promise<{ name: string; fileType: string; fileUrl: string, description: string } | null> {
+    try {
+        const sodium = await getSodium();
+        // the encrypted metadata is converted into the Uint8 array and then it is encrypted with the file encryption key
 
+        const encryptedMetadataBytes = sodium.from_base64(encryptedMetaData);
+        const nonceBytes = sodium.from_base64(nonce);
+        const decryptedMetadata = sodium.crypto_secretbox_open_easy(
+            encryptedMetadataBytes,
+            nonceBytes,
+            encryptionKey
+        );
+        const metadata: unknown = JSON.parse(new TextDecoder().decode(decryptedMetadata));
+
+        if (
+            typeof metadata !== "object" ||
+            metadata === null ||
+            !("name" in metadata) ||
+            !("fileType" in metadata) ||
+            !("fileUrl" in metadata) ||
+            !("description" in metadata) ||
+            typeof metadata.name !== "string" ||
+            typeof metadata.fileType !== "string" ||
+            typeof metadata.fileUrl !== "string" ||
+            typeof metadata.description !== "string"
+        ) {
+            console.error("Decrypted file metadata has an invalid format");
+            return null;
+        }
+
+        return {
+            name: metadata.name,
+            fileType: metadata.fileType,
+            fileUrl: metadata.fileUrl,
+            description: metadata.description
+        };
+    } catch (error) {
+        console.error("Failed to decrypt file metadata:", error);
+        return null;
+    }
+}
 // ---------------------------------------HELPER FUNCTION TO CONVERT Uint8 to and fro with Base64 -------------------------------------------------
 
 export async function toBase64(data: Uint8Array): Promise<string | null> {
