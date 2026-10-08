@@ -203,7 +203,7 @@ export async function encryptFileContent(
         const { header, state } = stateAndHeader
 
         const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB chunks
-        const encryptedChunks: Uint8Array[] = [header] // the encrypted chunks collection should be initalized with the header, as it is the entry point.
+        const encryptedChunks: Uint8Array[] = [] 
 
         let offset = 0 // this variable is used to track the no of bytes / size that which is being encrypted.
 
@@ -254,6 +254,7 @@ export async function encryptFileContent(
     }
 }
 
+export async function encryptFileMetadata()
 
 
 
