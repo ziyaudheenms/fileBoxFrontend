@@ -254,7 +254,27 @@ export async function encryptFileContent(
     }
 }
 
-export async function encryptFileMetadata()
+export async function encryptFileMetadata(
+    encryptionKey: Uint8Array,
+    metadata: {
+        name: string,
+        fileType: string,
+        fileUrl: string
+    }
+): Promise<{ encryptedFileMetadata: Uint8Array; nonce: Uint8Array } | null> {
+    try {
+        const sodium = await getSodium();
+        const jsonString = JSON.stringify(metadata);
+        const uint8MetaData = new TextEncoder().encode(jsonString);
+        const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
+        const encryptedFileMetadata = sodium.crypto_secretbox_easy(uint8MetaData, nonce, encryptionKey);
+
+        return { encryptedFileMetadata, nonce };
+    } catch (error) {
+        console.error("Failed to encrypt file metadata:", error);
+        return null;
+    }
+}
 
 
 
