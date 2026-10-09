@@ -1,7 +1,7 @@
 // This module deals with the flow of signIn operation with the handling of :--
 // decrypting of the encrypted master key, encrypted private key
 
-import { decryptMasterKey, decryptPrivateKey, deriveKeyEncryptionKey, fromBase64 } from "./keys"
+import { decryptMasterKey, decryptPrivateKey, deriveKeyEncryptionKey, fromBase64 } from "@/lib/crypto/keys"
 
 // ------------------------------------ALGORITHMIC FLOW------------------------------------------------------------------------
 // when the user logs in with the email and password , using that password KEK is generated and using the encrypted blobs from

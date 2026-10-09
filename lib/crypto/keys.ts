@@ -325,6 +325,23 @@ export async function decryptFileMetadata(
         return null;
     }
 }
+
+export async function decryptFileContent(
+    fileBlob: string,
+    header: string,
+    decryptionKey: string,
+    stateIn = null
+): Promise<null> {
+    // we have to decrypt back the encrypted blob that whihc consists of the stream of or chunk of encryoted data.
+    // we have to use the key which that is used to generate the header and state 
+    // also we have to use header also....
+
+    const sodium = getSodium()
+
+
+
+    return null
+}
 // ---------------------------------------HELPER FUNCTION TO CONVERT Uint8 to and fro with Base64 -------------------------------------------------
 
 export async function toBase64(data: Uint8Array): Promise<string | null> {
