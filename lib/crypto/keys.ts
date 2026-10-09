@@ -206,45 +206,44 @@ export async function encryptFileContent(
         const encryptedChunks: Uint8Array[] = []
 
         let offset = 0 // this variable is used to track the no of bytes / size that which is being encrypted.
-
-
-
         const encryptedStream = new ReadableStream<Uint8Array>({
-            async start(controller) {
+            async pull(controller) {
                 // controller is the JS object that is used to controll the process of enqueing , catching the stream error or closing the stream
                 try {
-                    while (offset < file.size) {
-                        const isLastChunk = (offset + CHUNK_SIZE) >= file.size // tracking whether its the last.
-                        //now we have to cut the chunks into the parts as we need
-                        const blobsize = file.slice(offset, offset + CHUNK_SIZE)
 
-                        // Next we have to load this file into binary and then load it into array buffer of Uint8
 
-                        const arrayBuffer = await blobsize.arrayBuffer()
-                        const Uint8chunk = new Uint8Array(arrayBuffer)
-
-                        // Now for true utilization of state, we have to assign tags with each stream with a special tag for the last stream so that the encryption can understand where does the stream ends and can prevent ffrom the truncation attacks.
-                        const tag = isLastChunk
-                            ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL   // TAG_FINAL hepls is identifying the last chunk so to determine how many chunks are there.
-                            : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
-
-                        // Now using all these data we have to encrypt each streams
-                        const encryptedBlock = sodium.crypto_secretstream_xchacha20poly1305_push(
-                            state,
-                            Uint8chunk,
-                            null, // Additional optional unencrypted data (AD)
-                            tag
-                        );
-
-                        
-                        // instead of stroing this in the encrypted array, we will stream this to the responce or the request whre the data is to be send
-                        controller.enqueue(encryptedBlock)
-                        offset += CHUNK_SIZE
-
+                    // since we are migrated to the pull method, no need for while loop and for ending the stream we are checking if the offset is greater than filesize or not
+                    if (offset >= file.size) { // if satisfies means the code completed the encryption of all the chunks of the file.
+                        controller.close();
+                        return;
                     }
-                    //once the while loop completes the run,
-                    controller.close()
 
+
+                    const isLastChunk = (offset + CHUNK_SIZE) >= file.size // tracking whether its the last.
+                    //now we have to cut the chunks into the parts as we need
+                    const blobsize = file.slice(offset, offset + CHUNK_SIZE)
+
+                    // Next we have to load this file into binary and then load it into array buffer of Uint8
+
+                    const arrayBuffer = await blobsize.arrayBuffer()
+                    const Uint8chunk = new Uint8Array(arrayBuffer)
+
+                    // Now for true utilization of state, we have to assign tags with each stream with a special tag for the last stream so that the encryption can understand where does the stream ends and can prevent ffrom the truncation attacks.
+                    const tag = isLastChunk
+                        ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL   // TAG_FINAL hepls is identifying the last chunk so to determine how many chunks are there.
+                        : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
+
+                    // Now using all these data we have to encrypt each streams
+                    const encryptedBlock = sodium.crypto_secretstream_xchacha20poly1305_push(
+                        state,
+                        Uint8chunk,
+                        null, // Additional optional unencrypted data (AD)
+                        tag
+                    );
+
+                    // instead of stroing this in the encrypted array, we will stream this to the responce or the request whre the data is to be send
+                    controller.enqueue(encryptedBlock)
+                    offset += CHUNK_SIZE
                 }
                 catch (streamError) {
                     console.log('some error occured with the stream')
@@ -256,7 +255,6 @@ export async function encryptFileContent(
             encryptedStream,
             header // Returning the raw Uint8Array header as well
         };
-
 
     }
     catch (e) {
