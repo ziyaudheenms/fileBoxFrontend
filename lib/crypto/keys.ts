@@ -337,42 +337,106 @@ export async function decryptFileMetadata(
 }
 
 export async function decryptFileContent(
-    fileBlob: string,
+    encryptedStream: ReadableStream<Uint8Array>, //we will be getting it as stream 
     header: Uint8Array,
     decryptionKey: Uint8Array,
-    stateIn = null
-): Promise<null> {
+): Promise<ReadableStream<Uint8Array> | null> {
     // we have to decrypt back the encrypted blob that whihc consists of the stream of or chunk of encryoted data.
     // we have to use the key which that is used to generate the header and state 
     // also we have to use header also....
+    try {
 
-    const sodium = await getSodium()
 
-    // we have to check whether our encryption key is suitable or not.
-    // first we have to check the length of the key that is used for the encryption if it supports the stream Encryption or not
-    if (decryptionKey.length != sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES) {
-        console.log(`we require a size of ${sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES} bytes but got a size of ${decryptionKey.length}bytes and its invalid!!`)
-        return null
+        const sodium = await getSodium()
+
+        // we have to check whether our encryption key is suitable or not.
+        // first we have to check the length of the key that is used for the encryption if it supports the stream Encryption or not
+        if (decryptionKey.length != sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES) {
+            console.log(`we require a size of ${sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES} bytes but got a size of ${decryptionKey.length}bytes and its invalid!!`)
+            return null
+        }
+
+        // checking if the header is off the acceptable format which we can use.
+        if (header.length !== sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES) {
+            console.error(`Invalid header size.`);
+            return null;
+        }
+
+        // now we have to create a decryption state with init_pull --> we used init_push for creating the encryption header and state
+        const decryptionState = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, decryptionKey);
+        // this state tracks the sequence of the streams and ensures that all chunks are there and verifies the security.
+
+        const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB chunks  --> chunk size should match the chunk size used for the encryption
+        const CIPHER_CHUNK_SIZE = CHUNK_SIZE + sodium.crypto_secretstream_xchacha20poly1305_ABYTES // --> since during the encryption with each chunk a tag was and is assigned , the size will be slighlty bigger
+
+        //We are using the Readable stream so that to save the memmory usage of RAM and to make suitable for large files
+
+        const reader = encryptedStream.getReader() // used to read the chunk of the incoming data
+        let buffer = new Uint8Array(0)
+
+        return new ReadableStream<Uint8Array>({
+            async pull(controller) {
+                try {
+                    // using the while loop to collect the incoming encrypted bytes as long till the size becomes eqaul to one chunk, because somethimes the netwrok sends stream of various lenghth.
+                    while (buffer.length < CIPHER_CHUNK_SIZE) {
+                        const { value, done } = await reader.read() // this method is used to read the incoming stream
+                        // done ---> Bool which says True if the data has reached the end or completed the flow.
+                        if (done) {
+                            //which means we have completed the file
+                            break;
+                        }
+
+                        const combined = new Uint8Array(buffer.length + value.length) // creating a Uint8 storage
+                        combined.set(buffer) //is used to copy the exisitng buffer into the new 'combined' buffer.
+                        combined.set(value, buffer.length) // the value read by the .read() is pasted into the new Uint8 array after the 'buffer.length' distance
+                        // updating the existing buffer with the new one for the updation of the loop
+                        buffer = combined
+                    }
+
+                    // once the above code block runs we will get a chunk of 3mb + auth tag of libsodium
+                    // now we have to check wheter its empty
+                    if (buffer.length === 0) {
+                        controller.close()
+                        return
+                    }
+
+                    // through the while loop we only checked for if the size is small, but in the last while execution maybe it can exceed the allowed size since stream comes of various size
+                    // we have to cut of excat size and keep the remainig safe for next pull in the buffer.
+                    const blockLen = Math.min(buffer.length, CIPHER_CHUNK_SIZE)  // --> in many cases the last chunk may not be excat 3mb so we use to take the .min between the buffer's current length and the allowed size.
+                    const cipherBlock = buffer.slice(0, blockLen)
+                    buffer = buffer.slice(blockLen) //--> cuts off the remaining extra bits and keeps it safe in the buffer.
+
+                    // now we have or cipherBlock --> just decrypt and enqueu the stream.
+                    const result = sodium.crypto_secretstream_xchacha20poly1305_pull(decryptionState, cipherBlock, null); // --> we have used the null in the encrytpion phase also.
+
+                    // if the decryption gets failed
+                    if (!result) {
+                        controller.error(new Error("Decryption integrity check failed: File is corrupted or tampered with."));
+                        return;
+                    }
+
+                    // now we have the decrypted data
+                    const { message, tag } = result;
+
+                    // Enqueue the decrypted plaintext chunk downstream
+                    controller.enqueue(message);
+                    // by using the 'tag' if the tag is of the last one we can close the controller.
+                    if (tag === sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL) {
+                        controller.close();
+                    }
+                }
+                catch (err) {
+                    controller.error(err)
+                }
+            },
+
+        })
+    }
+    catch (error) {
+        console.error("Failed to initialize decryption stream:", error);
+        return null;
     }
 
-    // now we have to create a decryption state with init_pull --> we used init_push for creating the encryption header and state
-    const decryptionState = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, decryptionKey);
-    // this state tracks the sequence of the streams and ensures that all chunks are there and verifies the security.
-
-    const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB chunks  --> chunk size should match the chunk size used for the encryption
-    const CIPHER_CHUNK_SIZE = CHUNK_SIZE + sodium.crypto_secretstream_xchacha20poly1305_ABYTES // --> since during the encryption with each chunk a tag was and is assigned , the size will be slighlty bigger
-
-    const decryptedChunks: BlobPart[] = []
-
-    let offset = 0
-
-    //Now we have to deal with the string blob of the encrypted data
-    //Encrypted blog is converted into Uint8 Array (encrypted) from string(encrypted blob)
-
-
-
-
-    return null
 }
 // ---------------------------------------HELPER FUNCTION TO CONVERT Uint8 to and fro with Base64 -------------------------------------------------
 
