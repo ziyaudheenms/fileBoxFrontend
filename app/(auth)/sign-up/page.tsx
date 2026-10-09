@@ -25,7 +25,7 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { getSodium } from '@/lib/sodium'  //used to load the Wasm version of libsodium asynchronously for cryptographic operations
 import { cryptoResponce } from '@/data/crypto'
-import { cryptoUserRegistration } from '@/lib/crypto/registration'
+import { cryptoUserRegistration } from '@/lib/crypto/workflows/registration'
 import { sessionVault } from '@/lib/crypto/session-vault'
 import { persistSessionKeys } from '@/lib/crypto/sessionPersistance'
 import { useClerk } from '@clerk/nextjs'

@@ -184,7 +184,7 @@ export async function decryptFileKey(
 export async function encryptFileContent(
     file: File,
     encryptionKey: Uint8Array
-): Promise<{encryptedFile: Blob, header:Uint8Array} | null> {
+): Promise<{ encryptedStream: ReadableStream<Uint8Array>, header: Uint8Array } | null> {
     // here for the file content encryption we are using the stream encryption techniqu where we encrypt the stream of data instead of treating it in the goooo.
     try {
         const sodium = await getSodium()
@@ -203,45 +203,57 @@ export async function encryptFileContent(
         const { header, state } = stateAndHeader
 
         const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB chunks
-        const encryptedChunks: Uint8Array[] = [] 
+        const encryptedChunks: Uint8Array[] = []
 
         let offset = 0 // this variable is used to track the no of bytes / size that which is being encrypted.
 
-        // we have to look through the chunks and perform the required encryptions.
-        while (offset < file.size) {
-            const isLastChunk = (offset + CHUNK_SIZE) >= file.size // tracking whether its the last.
-            //now we have to cut the chunks into the parts as we need
-            const blobsize = file.slice(offset, offset + CHUNK_SIZE)
 
-            // Next we have to load this file into binary and then load it into array buffer of Uint8
 
-            const arrayBuffer = await blobsize.arrayBuffer()
-            const Uint8chunk = new Uint8Array(arrayBuffer)
+        const encryptedStream = new ReadableStream<Uint8Array>({
+            async start(controller) {
+                // controller is the JS object that is used to controll the process of enqueing , catching the stream error or closing the stream
+                try {
+                    while (offset < file.size) {
+                        const isLastChunk = (offset + CHUNK_SIZE) >= file.size // tracking whether its the last.
+                        //now we have to cut the chunks into the parts as we need
+                        const blobsize = file.slice(offset, offset + CHUNK_SIZE)
 
-            // Now for true utilization of state, we have to assign tags with each stream with a special tag for the last stream so that the encryption can understand where does the stream ends and can prevent ffrom the truncation attacks.
-            const tag = isLastChunk
-                ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL   // TAG_FINAL hepls is identifying the last chunk so to determine how many chunks are there.
-                : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
-            
-            // Now using all these data we have to encrypt each streams
-            const encryptedBlock = sodium.crypto_secretstream_xchacha20poly1305_push(
-                state,
-                Uint8chunk,
-                null, // Additional optional unencrypted data (AD)
-                tag
-            );
+                        // Next we have to load this file into binary and then load it into array buffer of Uint8
 
-            // we have to append this encrypted chunk into the main chunck we initalized with header and adjust the offset
-            encryptedChunks.push(encryptedBlock)  // only push and pop is allwed in the js/ts arrays 
-            offset += CHUNK_SIZE
+                        const arrayBuffer = await blobsize.arrayBuffer()
+                        const Uint8chunk = new Uint8Array(arrayBuffer)
 
-        }
+                        // Now for true utilization of state, we have to assign tags with each stream with a special tag for the last stream so that the encryption can understand where does the stream ends and can prevent ffrom the truncation attacks.
+                        const tag = isLastChunk
+                            ? sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL   // TAG_FINAL hepls is identifying the last chunk so to determine how many chunks are there.
+                            : sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE;
 
-        // Combine all chunks into a single Blob
-        const encryptedFile = new Blob(encryptedChunks as BlobPart[], { type: 'application/octet-stream' });
-        
+                        // Now using all these data we have to encrypt each streams
+                        const encryptedBlock = sodium.crypto_secretstream_xchacha20poly1305_push(
+                            state,
+                            Uint8chunk,
+                            null, // Additional optional unencrypted data (AD)
+                            tag
+                        );
+
+                        
+                        // instead of stroing this in the encrypted array, we will stream this to the responce or the request whre the data is to be send
+                        controller.enqueue(encryptedBlock)
+                        offset += CHUNK_SIZE
+
+                    }
+                    //once the while loop completes the run,
+                    controller.close()
+
+                }
+                catch (streamError) {
+                    console.log('some error occured with the stream')
+                    controller.error(streamError)
+                }
+            }
+        })
         return {
-            encryptedFile,
+            encryptedStream,
             header // Returning the raw Uint8Array header as well
         };
 
@@ -260,7 +272,7 @@ export async function encryptFileMetadata(
         name: string,
         fileType: string,
         fileUrl: string,
-        decription: string, 
+        decription: string,
     }
 ): Promise<{ encryptedFileMetadata: Uint8Array; nonce: Uint8Array } | null> {
     try {
@@ -328,15 +340,37 @@ export async function decryptFileMetadata(
 
 export async function decryptFileContent(
     fileBlob: string,
-    header: string,
-    decryptionKey: string,
+    header: Uint8Array,
+    decryptionKey: Uint8Array,
     stateIn = null
 ): Promise<null> {
     // we have to decrypt back the encrypted blob that whihc consists of the stream of or chunk of encryoted data.
     // we have to use the key which that is used to generate the header and state 
     // also we have to use header also....
 
-    const sodium = getSodium()
+    const sodium = await getSodium()
+
+    // we have to check whether our encryption key is suitable or not.
+    // first we have to check the length of the key that is used for the encryption if it supports the stream Encryption or not
+    if (decryptionKey.length != sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES) {
+        console.log(`we require a size of ${sodium.crypto_secretstream_xchacha20poly1305_KEYBYTES} bytes but got a size of ${decryptionKey.length}bytes and its invalid!!`)
+        return null
+    }
+
+    // now we have to create a decryption state with init_pull --> we used init_push for creating the encryption header and state
+    const decryptionState = sodium.crypto_secretstream_xchacha20poly1305_init_pull(header, decryptionKey);
+    // this state tracks the sequence of the streams and ensures that all chunks are there and verifies the security.
+
+    const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB chunks  --> chunk size should match the chunk size used for the encryption
+    const CIPHER_CHUNK_SIZE = CHUNK_SIZE + sodium.crypto_secretstream_xchacha20poly1305_ABYTES // --> since during the encryption with each chunk a tag was and is assigned , the size will be slighlty bigger
+
+    const decryptedChunks: BlobPart[] = []
+
+    let offset = 0
+
+    //Now we have to deal with the string blob of the encrypted data
+    //Encrypted blog is converted into Uint8 Array (encrypted) from string(encrypted blob)
+
 
 
 
