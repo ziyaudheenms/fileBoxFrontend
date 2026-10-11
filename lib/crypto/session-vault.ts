@@ -6,6 +6,7 @@
 let cachedMasterKey: Uint8Array | null = null;
 let cachedPrivateKey: Uint8Array | null = null;
 let cachedPublicKey: Uint8Array | null = null;
+let cachedCollectionKeys = new Map<string, Uint8Array>();
 
 // sessionVault that which is used to collect all these important required things
 export const sessionVault = {
@@ -27,9 +28,14 @@ export const sessionVault = {
     return cachedPublicKey;
   },
 
+  getCollectionKey(folderID:string ) : Uint8Array | undefined {
+    return cachedCollectionKeys.get(folderID)
+  },
+
   clear() {
     cachedMasterKey = null;
     cachedPrivateKey = null;
     cachedPublicKey = null;
+    cachedCollectionKeys.clear();
   }
 };
