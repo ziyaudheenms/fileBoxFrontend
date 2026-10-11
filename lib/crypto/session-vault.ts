@@ -29,7 +29,18 @@ export const sessionVault = {
   },
 
   getCollectionKey(folderID:string ) : Uint8Array | undefined {
+    console.log('found out the key in the Map')
     return cachedCollectionKeys.get(folderID)
+  },
+
+  hasCollectionKey(folderID:string ) : boolean {
+     console.log('Checking for the existance of the key')
+    return cachedCollectionKeys.has(folderID)
+  },
+
+  setCollectionKey(folderID:string, collectionKey: Uint8Array ) {
+     console.log('setting up the key in the map')
+    return cachedCollectionKeys.set(folderID , collectionKey)
   },
 
   clear() {
