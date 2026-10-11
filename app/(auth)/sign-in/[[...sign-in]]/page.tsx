@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import axios from 'axios'
-import { loginCryptoSesions } from '@/lib/crypto/loginFlow'
+import { loginCryptoSesions } from '@/lib/crypto/workflows/loginFlow'
 import { sessionVault } from '@/lib/crypto/session-vault'
 import { persistSessionKeys } from '@/lib/crypto/sessionPersistance'
 import { useClerk } from '@clerk/nextjs'

@@ -416,7 +416,7 @@ function page() {
                     {
                         canEdit ? (
                             <div className='flex flex-col gap-2'>
-                                <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
+                                <FileUpload isRoot={true} shareUUID={params.id ? params.id as string : undefined} />
                                 <CreateFolder isRoot={false} shareUUID={params.id ? params.id as string : undefined} parentHash={params.parentHash ? params.parentHash as string : undefined} />
                                 <MoveOrCopyCard isShared={true} sharableUUID={params.id ? params.id as string : undefined} sourceID={params.id ? params.id as string : undefined} type={'folder'} />
 

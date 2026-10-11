@@ -10,6 +10,9 @@ import { useAuth } from '@clerk/nextjs'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { SearchIcon } from 'lucide-react'
+import { encryptCollectionKey, generateCollectionKey, toBase64 } from '@/lib/crypto/keys'
+import { sessionVault } from '@/lib/crypto/session-vault'
+import { restoreSessionKeys } from '@/lib/crypto/sessionPersistance'
 interface FolderCreateProps {
   isRoot: boolean;
   folderID?: string;
@@ -51,11 +54,43 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash, closeToolsDrawe
     e.preventDefault()
     setUpLoading(true)
 
+
+    await restoreSessionKeys()    
+    const masterKey = sessionVault.getMasterKey()
+    if (!masterKey) {
+      toast.error("Your encryption session is unavailable. Please sign in again.")
+      setUpLoading(false)
+      return
+    }
+
+    const generatedKey = await generateCollectionKey()
+    if (!generatedKey) {
+      toast.error("Could not generate a collection key.")
+      setUpLoading(false)
+      return
+    }
+
+    const encryptedKey = await encryptCollectionKey(generatedKey.collectionKey, masterKey)
+    if (!encryptedKey) {
+      toast.error("Could not encrypt the collection key.")
+      setUpLoading(false)
+      return
+    }
+
+    const encryptedCollectionKey = await toBase64(encryptedKey.encryptedCollectionKey)
+    const collectionKeyNonce = await toBase64(encryptedKey.nonce)
+    if (!encryptedCollectionKey || !collectionKeyNonce) {
+      toast.error("Could not prepare the encrypted collection key for upload.")
+      setUpLoading(false)
+      return
+    }
+
     const jwtToken = await getToken()
-
+    console.log(encryptedCollectionKey, collectionKeyNonce)
     axios.post(APIENDPOINT, {
-
-      name: folderName
+      name: folderName,
+      encryptedCollectionKey : encryptedCollectionKey,
+      collectionKeyNonce : collectionKeyNonce
 
     },
       {
@@ -68,6 +103,7 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash, closeToolsDrawe
         console.log(res);
 
         if (res.data.status_code == 5000) {
+          sessionVault.setCollectionKey(String(res.data.data), generatedKey.collectionKey)
           toast.success("Folder Successfully Created")
           if (shareUUID) {
             if (parentHash) {
@@ -88,7 +124,8 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash, closeToolsDrawe
         else { }
 
       }).catch((err) => {
-        console.log(err)
+        console.error("Folder creation failed:", err)
+        toast.error("Could not create folder.")
       })
       .finally(() => {
         setUpLoading(false);

@@ -24,6 +24,8 @@ interface FileFolderProps {
     uploaded_at: Date;
     updated_at: Date;
     isfolder: boolean;
+    encrypted_collection_key?: string; //this key exists only if the returned record is folder.
+    encrypted_collection_key_nonce?: string
     is_root_folder: boolean;
     file_url: string | null;
     file_extension: string | null;
@@ -69,7 +71,6 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
         }))
     }
 
-
     return (
         <div>
             {
@@ -85,7 +86,11 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
              cursor-pointer overflow-hidden flex flex-col justify-between'>
                                 {
                                     item.isfolder ? (
-                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`} className='block w-full'>
+                                        <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`} className='block w-full' onClick={() => {
+                                            localStorage.setItem("CURRENT_FOLDER_ENCRYPTED", String(item.encrypted_collection_key))
+                                            localStorage.setItem("CURRENT_FOLDER_ENCRYPTED_NONCE", String(item.encrypted_collection_key_nonce))
+                                            console.log("set the encrypted credentials of the current parent folder")
+                                        }}>
                                             <div className='relative h-44 w-full bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center rounded-t-lg overflow-hidden'>
                                                 {
                                                     item.author == user?.username ? null : (

@@ -162,6 +162,7 @@ export default function SignUpPage() {
             await persistSessionKeys(
               freshSession.masterKey,
               freshSession.privateKey,
+              freshSession.publicKey
             );
 
             toast.success('Account created successfully! Welcome aboard.')

@@ -16,6 +16,8 @@ interface FileFolderProps {
     uploaded_at: Date;
     updated_at: Date;
     isfolder: boolean;
+    encrypted_collection_key?: string; //this key exists only if the returned record is folder.
+    encrypted_collection_key_nonce?: string
     is_root_folder: boolean;
     file_url: string | null;
     file_extension: string | null;

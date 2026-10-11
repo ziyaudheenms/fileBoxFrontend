@@ -13,12 +13,14 @@
 //Documenting some things here in the code so that i can sort of revise , revisit ect, for understanding the code in future.
 
 
+import { sessionVault } from './session-vault';
 import { fileBoxSessionDB } from './sessionDB'
 
 
 export async function persistSessionKeys(
     masterKey: Uint8Array,
-    privateKey: Uint8Array
+    privateKey: Uint8Array,
+    publicKey: Uint8Array
 ): Promise<void> {
 
     //FIRST STEP IS TO CREATE A SESSION WRAPPER KEY USING THE NATIVE CRYPTO MODULE OF BROWSER
@@ -33,7 +35,8 @@ export async function persistSessionKeys(
 
     const dataToEncrypt = JSON.stringify({
         masterKey: Array.from(masterKey),
-        privateKey: Array.from(privateKey)
+        privateKey: Array.from(privateKey),
+        publicKey: Array.from(publicKey)
     }) // stringified object of the keys to encypt
 
     //Now we have to convert the stringified object into Uint8Array so that we can encrypt it with the session wrapper key
@@ -68,7 +71,7 @@ export async function persistSessionKeys(
 
 // Next we have to create a function to get the session keys from the indexed DB and decrypt them using the session wrapper key stored in the indexed DB
 
-export async function restoreSessionKeys(): Promise<{ masterKey: Uint8Array, privateKey: Uint8Array } | null> {
+export async function restoreSessionKeys(){
     // first we need to get the stored keys from the DB
     try {
 
@@ -100,13 +103,12 @@ export async function restoreSessionKeys(): Promise<{ masterKey: Uint8Array, pri
 
         const restoredMasterKey = new Uint8Array(parsedDecryptedData.masterKey); // convert the masterKey back to Uint8Array
         const restoredPrivateKey = new Uint8Array(parsedDecryptedData.privateKey); // convert the privateKey back to Uint8Array
-
-        return {
-            masterKey: restoredMasterKey,
-            privateKey: restoredPrivateKey
-        }
+        const restoredPublicKey = new Uint8Array(parsedDecryptedData.publicKey); // convert the public back to Uint8Array
 
 
+        sessionVault.setKeys(restoredMasterKey, restoredPrivateKey, restoredPublicKey) // restored the keys into the session.
+
+        return 
     }
     catch (error) {
         console.error('Failed to restore session via Dexie:', error);

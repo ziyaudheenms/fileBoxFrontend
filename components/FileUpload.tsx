@@ -1,12 +1,11 @@
 "use client"
 import React, { useRef, useState } from 'react';
-import axios from 'axios';
-import { useAuth, useUser } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 import { IconFileUpload, IconUpload } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-
-const chunkSize = 1024 * 1024 * 2;
+import { encryptFileContent, encryptFileKey, toBase64 } from '@/lib/crypto/keys';
+import { fileUploadFlow } from '@/lib/crypto/workflows/fileUpload';
 
 interface FileUploadProps {
     isRoot: boolean;
@@ -21,12 +20,9 @@ function FileUpload({ isRoot, folderID , shareUUID , parentHash, closeToolsDrawe
     const [upLoading, setUpLoading] = useState<Boolean | false>(false)
     const inputRef = useRef<HTMLInputElement>(null);
     const [progress, setProgress] = useState(0)
-    const [fileID, setFileID] = useState("")
     const router = useRouter()
 
-    let APIENDPOINTFORCHUNKED = ""
-
-    let APIURL =  `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/Create/Image/`
+    const APIURL = `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/Create/Image/`
 
     const params = new URLSearchParams();
 
@@ -44,126 +40,132 @@ function FileUpload({ isRoot, folderID , shareUUID , parentHash, closeToolsDrawe
 
     const queryString = params.toString()
 
-    let APIENDPOINT = queryString ? `${APIURL}?${queryString}` : APIURL;
+    const APIENDPOINT = queryString ? `${APIURL}Chunk/?${queryString}` : `${APIURL}Chunk/`;
+    const APIENDPOINTFORCHUNKED = queryString
+        ? `${APIURL}Chunk/Join/?${queryString}`
+        : `${APIURL}Chunk/Join/`;
 
-    // !isRoot ? APIENDPOINT = "http://127.0.0.1:8000/api/v1/Create/Image/" : APIENDPOINT = `http://127.0.0.1:8000/api/v1/Create/Image/?folderID=${folderID}`
-    // !isRoot ? APIENDPOINTFORCHUNKED = "http://127.0.0.1:8000/api/v1/Create/Image/Chunk/Join/" : APIENDPOINTFORCHUNKED = `http://127.0.0.1:8000/api/v1/Create/Image/Chunk/Join/?folderID=${folderID}`
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-    const chunkUploader = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        setUpLoading(true)
-        if (e.target.files && e.target.files[0]) {
-            const jwtToken = await getToken()
-            const file = e.target.files[0]
-            // localStorage.setItem(file);
-            localStorage.setItem("File_Name", file.name);
-            localStorage.setItem("File_Size", file.size.toString());
-            localStorage.setItem("File_Extension", file.type);
+        setUpLoading(true);
+        setProgress(0);
 
-            if (file.type.includes("image/")) {
+        try {
+            if (!file.type.includes("image/")) {
+                toast.error("Only Image files are allowed");
+                return;
+            }
 
-                if (file.size <= chunkSize) {
+            const encryptionFolderID = folderID ?? parentHash ?? shareUUID;
+            if (!encryptionFolderID) {
+                toast.error("Select a folder before uploading an encrypted file.");
+                return;
+            }
 
-                    const formData = new FormData()
-                    formData.append("image", e.target.files[0])
-                    await axios.post(APIENDPOINT, formData, {
-                        headers: {
-                            authorization: `Bearer ${jwtToken}`,
-                        },
-                    }).then((res) => {
-                        console.log(res);
-                        if (res.data.status_code === 5000) {
-                            if (shareUUID != null) {
-                                if (parentHash != null) {
-                                    // http://localhost:3000/sharable/folder/8e11a9ef-99b9-447b-9efd-18fc7a516657/kpB4Aqe3
-                                    router.push(`/preview/${res.data.data}`)
-                                }
-                                else {
-                                    router.push(`sharable/folder/${shareUUID}/${res.data.data}`)
-                                }
-                            }
-                            else {
-                                router.push(`/images/${res.data.data}`) // Redirecting for the actual users.........
-                            }
-                            toast.success("File Successfully Added to Queue")
-                        } else {
-                            toast.error("oops! Some error have happened")
-                        }
-                    }).catch((err) => {
-                        console.log(err)
-                        toast.error("oops! Some error have happened")
-                    }).finally(() => {
-                        setUpLoading(false);
-                    })
+            const jwtToken = await getToken();
+            if (!jwtToken) {
+                toast.error("Your session has expired. Please sign in again.");
+                return;
+            }
 
+            const keys = await fileUploadFlow(file, encryptionFolderID);
+            if (!keys) return;
 
+            const encryptedFileKey = await encryptFileKey(keys.fileKey, keys.collectionKey);
+            const encryptedContent = await encryptFileContent(file, keys.fileKey);
+            if (!encryptedFileKey || !encryptedContent) {
+                toast.error("Could not encrypt the file for upload.");
+                return;
+            }
 
-                } else {
-                    const totalChunks = Math.ceil(file.size / chunkSize)
-                    const fileID = crypto.randomUUID()
-                    setFileID(fileID)
-                    for (let i = 0; i < totalChunks; i++) {
-                        console.log(i);
+            const [encryptedFileKeyBase64, fileKeyNonceBase64, streamHeaderBase64] = await Promise.all([
+                toBase64(encryptedFileKey.encryptedFileKey),
+                toBase64(encryptedFileKey.nonce),
+                toBase64(encryptedContent.header),
+            ]);
+            if (!encryptedFileKeyBase64 || !fileKeyNonceBase64 || !streamHeaderBase64) {
+                toast.error("Could not prepare encryption data for upload.");
+                return;
+            }
 
-                        const start = i * chunkSize
-                        const end = Math.min(file.size, start + chunkSize)
+            const fileId = crypto.randomUUID();
+            const totalChunks = Math.max(1, Math.ceil(file.size / (3 * 1024 * 1024)));
+            const reader = encryptedContent.encryptedStream.getReader();
 
-                        const chunk = file.slice(start, end);
-                        console.log(chunk);
-
-                        const formData = new FormData()
-                        formData.append("chunk", chunk);
-                        formData.append("chunkIndex", i.toString());
-                        formData.append("totalChunks", totalChunks.toString());
-                        formData.append("fileId", fileID);
-                        formData.append("fileName", file.name);
-                        await axios.post("http://127.0.0.1:8000/api/v1/Create/Image/Chunk/", formData, {
-                            headers: {
-                                authorization: `Bearer ${jwtToken}`,
-                            },
-                        })
-                            .then((res) => {
-                                console.log(res);
-                                // toast.success("File Successfully Added to Queue")
-                                setProgress((prevProgress) => {
-                                    const nextProgress = Math.round(((i + 1) / totalChunks) * 100);
-                                    console.log("Setting progress to:", nextProgress); // Verify in console
-                                    return nextProgress;
-                                });
-                            }).catch((err) => {
-                                console.log(err)
-                                toast.error("oops! Some error have happened")
-                            })
-                        setTimeout(() => { }, 1000);
-                    }
-                    await axios.post(APIENDPOINTFORCHUNKED, {
-                        fileId: fileID,
-                        fileName: localStorage.getItem('File_Name'),
-                        fileSize: localStorage.getItem('File_Size'),
-                        fileExtenstion: localStorage.getItem("File_Extension")
-                    },
-                        {
-                            headers: {
-                                authorization: `Bearer ${jwtToken}`,
-                            },
-                        }).then((res) => {
-                            console.log(res);
-                            if (res.data.status_code === 5000) {
-                                router.push(`/images/${res.data.data}`)
-                                toast.success("File Successfully Added to Queue")
-                            } else {
-                                toast.error("oops! Some error have happened")
-                            }
-                        })
-                    setUpLoading(false)
-                    setProgress((prevProgress) => {
-                        return 0;
-                    });
+            for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+                const { done, value } = await reader.read();
+                if (done || !value) {
+                    throw new Error(`Encrypted stream ended before chunk ${chunkIndex + 1} of ${totalChunks}.`);
                 }
 
+                const chunkFormData = new FormData();
+                chunkFormData.append("chunk", new Blob([value.slice().buffer], { type: "application/octet-stream" }));
+                chunkFormData.append("chunkIndex", chunkIndex.toString());
+                chunkFormData.append("totalChunks", totalChunks.toString());
+                chunkFormData.append("fileId", fileId);
+                chunkFormData.append("fileName", file.name);
+
+                const chunkResponse = await fetch(APIENDPOINT, {
+                    method: "POST",
+                    headers: { authorization: `Bearer ${jwtToken}` },
+                    body: chunkFormData,
+                });
+                if (!chunkResponse.ok) {
+                    throw new Error(`Chunk ${chunkIndex + 1} upload failed with HTTP ${chunkResponse.status}.`);
+                }
+
+                setProgress(Math.round(((chunkIndex + 1) / totalChunks) * 90));
             }
-            else {
-                toast.error("Only Image files are allowed")
-                setUpLoading(false)
+
+            const extraChunk = await reader.read();
+            if (!extraChunk.done) {
+                throw new Error("Encrypted stream produced more chunks than expected.");
+            }
+
+            const joinResponse = await fetch(APIENDPOINTFORCHUNKED, {
+                method: "POST",
+                headers: {
+                    authorization: `Bearer ${jwtToken}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    fileId,
+                    fileName: file.name,
+                    fileSize: file.size,
+                    fileExtenstion: file.type,
+                    encryptedFileKey: encryptedFileKeyBase64,
+                    fileKeyNonce: fileKeyNonceBase64,
+                    encryptionHeader: streamHeaderBase64,
+                }),
+            });
+            if (!joinResponse.ok) {
+                throw new Error(`Chunked upload finalization failed with HTTP ${joinResponse.status}.`);
+            }
+
+            const result: { status_code?: number; data?: string } = await joinResponse.json();
+            if (result.status_code !== 5000 || !result.data) {
+                toast.error("File upload failed.");
+                return;
+            }
+
+            setProgress(100);
+            if (shareUUID) {
+                router.push(parentHash
+                    ? `/preview/${result.data}`
+                    : `sharable/folder/${shareUUID}/${result.data}`);
+            } else {
+                router.push(`/images/${result.data}`);
+            }
+            toast.success("File Successfully Added to Queue");
+        } catch (error) {
+            console.error("File upload failed:", error);
+            toast.error("Could not upload file.");
+        } finally {
+            setUpLoading(false);
+            if (inputRef.current) {
+                inputRef.current.value = "";
             }
         }
     }
@@ -194,7 +196,7 @@ function FileUpload({ isRoot, folderID , shareUUID , parentHash, closeToolsDrawe
                     <input
                         type="file"
                         ref={inputRef}
-                        onChange={chunkUploader}
+                        onChange={handleFileUpload}
                         onClick={() => closeToolsDrawer && closeToolsDrawer()}
                         className='w-full text-neutral-700 dark:text-neutral-300 file:bg-neutral-100 file:dark:bg-neutral-800 file:text-neutral-900 file:dark:text-neutral-100 file:border-none file:px-4 file:py-2 file:rounded-xl file:cursor-pointer'
                     />

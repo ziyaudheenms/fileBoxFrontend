@@ -142,10 +142,10 @@ export async function decryptCollectionKey(
     }
 }
 
-export async function generateFileKey(): Promise<{ fileKey: Uint8Array } | null> {
+export async function generateFileKey(): Promise< Uint8Array | null> {
     try {
         const sodium = await getSodium();
-        return { fileKey: sodium.crypto_secretbox_keygen() };
+        return sodium.crypto_secretbox_keygen() 
     } catch (error) {
         console.error("Failed to generate file key:", error);
         return null;
@@ -204,6 +204,7 @@ export async function encryptFileContent(
 
         const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB chunks
         let offset = 0 // this variable is used to track the no of bytes / size that which is being encrypted.
+        let emptyFileChunkSent = false
         const encryptedStream = new ReadableStream<Uint8Array>({
             async pull(controller) {
                 // controller is the JS object that is used to controll the process of enqueing , catching the stream error or closing the stream
@@ -211,6 +212,18 @@ export async function encryptFileContent(
 
 
                     // since we are migrated to the pull method, no need for while loop and for ending the stream we are checking if the offset is greater than filesize or not
+                    if (file.size === 0 && !emptyFileChunkSent) {
+                        const encryptedBlock = sodium.crypto_secretstream_xchacha20poly1305_push(
+                            state,
+                            new Uint8Array(),
+                            null,
+                            sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL
+                        );
+                        emptyFileChunkSent = true;
+                        controller.enqueue(encryptedBlock);
+                        return;
+                    }
+
                     if (offset >= file.size) { // if satisfies means the code completed the encryption of all the chunks of the file.
                         controller.close();
                         return;
