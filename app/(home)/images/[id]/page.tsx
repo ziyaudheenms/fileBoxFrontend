@@ -18,6 +18,14 @@ import Settings from '@/components/Settings'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { getSingleFile } from '@/features/FileFoldersSlice'
 import Password from '@/components/Password'
+import { FileContentFlow, FileMetaDataFlow } from '@/lib/crypto/workflows/decryptFlowOfFiles'
+
+interface DecryptedFileMetadata {
+    name: string;
+    fileType: string;
+    description: string;
+}
+
 // Custom function to get relative time based on the DATE object.
 function getRelativeTime(date: Date | string | undefined): string {
     if (!date) return '';
@@ -44,6 +52,8 @@ function page() {
     const [loading, setLoading] = useState(false)
     const [token, setToken] = useState("")
     const [upDatePermissionLoader, setupDatePermissionLoader] = useState<Boolean>(false)
+    const [decryptedMetadata, setDecryptedMetadata] = useState<DecryptedFileMetadata | null>(null)
+    const [decryptedContentUrl, setDecryptedContentUrl] = useState<string | null>(null)
     const params = useParams();
     const wsRef = React.useRef<WebSocket | null>(null);
     const { singlePageData, isLoading, sessionStatus } = useAppSelector((state) => state.fileFolders)
@@ -70,6 +80,87 @@ function page() {
     useEffect(() => {
         HandleSingleImage()
     }, [])
+
+    useEffect(() => {
+        let isActive = true
+        let objectUrl: string | null = null
+
+        const decryptFile = async () => {
+            const file = singlePageData
+            setDecryptedMetadata(null)
+            setDecryptedContentUrl(null)
+
+            if (
+                !file?.parentFolder ||
+                !file.name ||
+                !file.encrypted_file_key ||
+                !file.file_key_nonce ||
+                !file.file_metadata_key_nonce
+            ) {
+                return
+            }
+
+            try {
+                const metadata = await FileMetaDataFlow(
+                    String(file.parentFolder),
+                    file.name,
+                    file.encrypted_file_key,
+                    file.file_key_nonce,
+                    file.file_metadata_key_nonce
+                )
+
+                if (!metadata) {
+                    toast.error("Unable to decrypt file metadata. Please log in again.")
+                    return
+                }
+
+                if (isActive) {
+                    setDecryptedMetadata(metadata)
+                }
+
+                if (!file.file_url || !file.encryption_header) {
+                    return
+                }
+
+                const content = await FileContentFlow(
+                    String(file.parentFolder),
+                    file.file_url,
+                    file.encryption_header,
+                    file.encrypted_file_key,
+                    file.file_key_nonce
+                )
+
+                if (!content) {
+                    toast.error("Unable to decrypt file content. Please log in again.")
+                    return
+                }
+
+                const blob = await new Response(content.decryptedStream).blob()
+                if (!isActive) {
+                    return
+                }
+
+                objectUrl = URL.createObjectURL(blob)
+                setDecryptedContentUrl(objectUrl)
+            } catch (error) {
+                console.error("Failed to decrypt image file", error)
+                toast.error("Unable to decrypt this image.")
+            }
+        }
+
+        void decryptFile()
+        return () => {
+            isActive = false
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl)
+            }
+        }
+    }, [singlePageData])
+
+    const displayName = decryptedMetadata?.name || singlePageData?.name
+    const displayFileType = decryptedMetadata?.fileType || singlePageData?.file_extension
+    const hasEncryptedContent = Boolean(singlePageData?.encrypted_file_key || singlePageData?.encryption_header)
+    const displayContentUrl = decryptedContentUrl || (!hasEncryptedContent ? singlePageData?.file_url : null)
 
     // useEffect(() => {
     //     HandleSingleImage()
@@ -137,7 +228,7 @@ function page() {
                         {/* Image Preview Container */}
                         <div className='w-full lg:w-[58%] xl:w-[62%] flex items-center justify-center flex-shrink-0'>
                             {
-                                singlePageData?.file_url ? (
+                                displayContentUrl ? (
                                     <div className='w-full'>
                                         {
                                             singlePageData?.upload_status == 'PENDING' || singlePageData?.upload_status == 'PROCESSING' || singlePageData?.upload_status == 'FAILED' ? (
@@ -147,8 +238,8 @@ function page() {
                                             ) : (
                                                 <div className='relative w-full h-[280px] sm:h-[400px] md:h-[480px] lg:h-[560px] rounded-2xl border border-neutral-800 bg-neutral-900/40 backdrop-blur-md flex items-center justify-center p-3 shadow-2xl overflow-hidden'>
                                                     <Image
-                                                        src={singlePageData?.file_url}
-                                                        alt={singlePageData?.name || 'Uploaded Image'}
+                                                        src={displayContentUrl}
+                                                        alt={displayName || 'Uploaded Image'}
                                                         fill
                                                         sizes="(max-width: 1024px) 100vw, 60vw"
                                                         className='object-contain rounded-xl'
@@ -159,8 +250,10 @@ function page() {
                                         }
                                     </div>
                                 ) : (
-                                    <div className='w-full h-72 sm:h-96 flex items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/20'>
-                                        <InfiniteLoader />
+                                    <div className='w-full h-72 sm:h-96 flex items-center justify-center rounded-2xl border border-neutral-800 bg-neutral-900/20 text-neutral-400'>
+                                        {isLoading || singlePageData?.upload_status === 'PENDING' || singlePageData?.upload_status === 'PROCESSING'
+                                            ? <InfiniteLoader />
+                                            : hasEncryptedContent ? 'Unable to decrypt image preview' : 'No image preview available'}
                                     </div>
                                 )
                             }
@@ -173,7 +266,7 @@ function page() {
                                 <div className='flex flex-col gap-3'>
                                     <div className='font-sans flex items-center justify-between gap-3'>
                                         <h5 className='text-neutral-400 text-sm flex-shrink-0'>Name</h5>
-                                        <h5 className='text-neutral-100 text-sm font-medium truncate text-right' title={singlePageData?.name}>{singlePageData?.name}</h5>
+                                        <h5 className='text-neutral-100 text-sm font-medium truncate text-right' title={displayName}>{displayName}</h5>
                                     </div>
                                     <div className='font-sans flex items-center justify-between gap-3'>
                                         <h5 className='text-neutral-400 text-sm flex-shrink-0'>Size</h5>
@@ -197,12 +290,18 @@ function page() {
                                     </div>
                                     <div className='font-sans flex items-center justify-between gap-3'>
                                         <h5 className='text-neutral-400 text-sm flex-shrink-0'>Type</h5>
-                                        <h5 className='text-neutral-100 text-sm font-medium uppercase text-right'>{singlePageData?.file_extension}</h5>
+                                        <h5 className='text-neutral-100 text-sm font-medium uppercase text-right'>{displayFileType}</h5>
                                     </div>
+                                    {decryptedMetadata?.description ? (
+                                        <div className='font-sans flex items-start justify-between gap-3'>
+                                            <h5 className='text-neutral-400 text-sm flex-shrink-0'>Description</h5>
+                                            <h5 className='text-neutral-100 text-sm font-medium text-right'>{decryptedMetadata.description}</h5>
+                                        </div>
+                                    ) : null}
                                 </div>
 
                                 <div className='w-full pb-1 pt-5 border-t border-neutral-800/80 mt-4'>
-                                    <Download fileName={singlePageData?.name} fileUrl={singlePageData?.file_url} />
+                                    <Download fileName={displayName || 'download'} fileUrl={displayContentUrl || null} />
                                     <div className='w-full py-2 flex items-center gap-2 font-figtree mt-2'>
                                         <ShareCard fileFolderID={singlePageData?.id} type={'image'} isShared={false} isOwner={true} />
                                         <DeleteButton fileFolderID={params.id ? params.id as string : undefined} isDropDown={false} />

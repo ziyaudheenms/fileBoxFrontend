@@ -12,13 +12,11 @@ import { decryptCollectionKey, decryptFileContentStream, decryptFileKey, decrypt
 // FIRST we need the master key, using the master key we have to get the collection key of the respected file
 //  using the collection key, file key is derived and is passed into the metaData derivation function along with all the required parameters.
 
-export async function FileMetaDataFlow(
+export async function FileFlowKeys(
     parentFolderID: string,
-    encryptedMetaData: string,
     encryptedFileKey: string,
     fileKeyNonce: string,
-    metadataNonce: string
-): Promise<{ name: string; fileType: string; description: string } | null> {
+): Promise<{ collectionKey: Uint8Array, fileKey: Uint8Array } | null> {
 
     const Uint8encryptedFileKey = await fromBase64(encryptedFileKey);
     const Uint8fileKeyNonce = await fromBase64(fileKeyNonce);
@@ -86,6 +84,33 @@ export async function FileMetaDataFlow(
         return null
     }
 
+
+    return {
+        collectionKey: decryptedCollectionKey,
+        fileKey: fileKey
+    }
+}
+
+
+
+
+
+export async function FileMetaDataFlow(
+    parentFolderID: string,
+    encryptedMetaData: string,
+    encryptedFileKey: string,
+    fileKeyNonce: string,
+    metadataNonce: string
+): Promise<{ name: string; fileType: string; description: string } | null> {
+
+
+    const keys = await FileFlowKeys(parentFolderID, encryptedFileKey, fileKeyNonce)
+    if (!keys) {
+        console.log("cant resolve the keysssss.")
+        return null
+    }
+
+    const { fileKey, collectionKey } = keys
     // once all the keys are found out and derieved now, lets derive the metadata
 
     const fileMetaData = await decryptFileMetadata(encryptedMetaData, metadataNonce, fileKey)
@@ -102,10 +127,12 @@ export async function FileMetaDataFlow(
 // what we get is the encryted key of the file content.
 
 export async function FileContentFlow(
+    parentFolderID: string,
     fileUrl: string,
     streamHeader: string,
-    encryptionKey: string
-):Promise<{
+    encryptionKey: string,
+    encryptionKeyNonce: string
+): Promise<{
     decryptedStream: ReadableStream<Uint8Array>
 } | null> {
 
@@ -114,6 +141,15 @@ export async function FileContentFlow(
     // the responce.body will we stream of chunks and we pass the ReadableStream into the decryption function and function returns the decrypted raw chunks of the original file.
 
 
+    const keys = await FileFlowKeys(parentFolderID, encryptionKey, encryptionKeyNonce)
+    if (!keys) {
+        console.log("cant resolve the keysssss.")
+        return null
+    }
+
+    const { fileKey, collectionKey } = keys
+
+    console.log(fileUrl)
     const response = await fetch(fileUrl) //using the native fetch to GET the non-image data
 
     if (!response.ok || !response.body) {
@@ -123,16 +159,15 @@ export async function FileContentFlow(
     // here we have to utilize the stream propertiy for getting thr data as chunks which is inbuild in fetch  
     // response.body is a ReadableStream and also is a Uint8 array so we just need to pass them.
 
-    const uint8encryptionKey = await fromBase64(encryptionKey)
     const uint8streamHeader = await fromBase64(streamHeader)
 
-    if (!uint8encryptionKey || !uint8streamHeader) {
+    if (!uint8streamHeader) {
         console.log("Cant find out the keys (encryotion key and the stream key)")
         return null
     }
 
-    const decryptedFileData = await decryptFileContentStream(response.body,uint8streamHeader, uint8encryptionKey)
-    if (!decryptedFileData){
+    const decryptedFileData = await decryptFileContentStream(response.body, uint8streamHeader, fileKey)
+    if (!decryptedFileData) {
         console.log("something wrong, cant perform the deecryption")
         return null
     }

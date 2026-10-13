@@ -1,10 +1,11 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from 'next/link';
 import { IconDotsVertical, IconFileStar, IconFolder, IconHeartFilled, IconTrash } from '@tabler/icons-react';
 import ImageProcessing from './ImageProcessing';
 import Image from 'next/image'; // Add this line
+import axios from 'axios';
 import { useUser } from '@clerk/nextjs';
 import FileFolderBadge from './FileFolderBadge';
 import DeleteButton from './DeleteButton';
@@ -18,7 +19,7 @@ import { sessionVault } from '@/lib/crypto/session-vault';
 import { decryptCollectionKey, fromBase64 } from '@/lib/crypto/keys';
 import { restoreSessionKeys } from '@/lib/crypto/sessionPersistance';
 import { toast } from 'sonner';
-import { FileMetaDataFlow } from '@/lib/crypto/workflows/decryptFlowOfFiles';
+import { FileContentFlow, FileMetaDataFlow } from '@/lib/crypto/workflows/decryptFlowOfFiles';
 
 interface FileFolderProps {
     id: number;
@@ -35,6 +36,7 @@ interface FileFolderProps {
     encrypted_file_key?: string,
     file_key_nonce?: string,
     file_metadata_key_nonce?: string,
+    encryption_header?: string,
 
     is_root_folder: boolean;
     file_url: string | null;
@@ -53,23 +55,26 @@ interface Props {
     isFavoritePage: boolean;
     isShared?: boolean;
     shareUUID?: string;
+    resolveParentKeys?: boolean;
 }
 
 interface FileMetadata {
     name: string;
     fileType: string;
     description: string;
+    contentURL: string | null
 
 }
 
 
 
-function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavoritePage, isShared, shareUUID }: Props) {
+function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavoritePage, isShared, shareUUID, resolveParentKeys }: Props) {
     const { isSignedIn, user, isLoaded } = useUser();
     const { getToken } = useAuth()
     const { isTrashLoading, specificRecordID, isFavoriteLoading } = useAppSelector((state) => state.fileFolders)
     const dispatch = useAppDispatch()
     const [decryptedMetadata, setDecryptedMetadata] = useState<Record<number, Partial<FileMetadata>>>({})
+    const resolvedParentIDs = useRef(new Set<string>())
 
 
     // file folder operations.....
@@ -105,13 +110,109 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
         return metadata as FileMetadata
     }
 
+    const HandleDecryptContent = async (parentID: string, fileURL: string, streamHeader: string, fileKey: string, nonce: string,): Promise<string | null> => {
+        const content = await FileContentFlow(parentID, fileURL, streamHeader, fileKey, nonce)
+
+        if (!content) {
+            toast.error("some error occured with the crypto handling, Login Again")
+            return null
+        }
+
+        const response = new Response(content.decryptedStream);
+
+        // 2. Consume the response body as a Blob
+        const blob = await response.blob();
+
+        // 3. Create an object URL from the blob
+        const blobUrl = URL.createObjectURL(blob);
+
+        return blobUrl;
+    }
+
+    const HandleResolveParentKey = async (parentID: string, jwtToken: string) => {
+        if (sessionVault.hasCollectionKey(parentID) && !resolveParentKeys) {
+            return
+        }
+
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/fileFolders/Single?fileFolderID=${parentID}`, {
+            headers: { authorization: `Bearer ${jwtToken}` },
+            withCredentials: true,
+        })
+        const parentFolder = response.data?.data
+        const encryptedCollectionKey = parentFolder?.encrypted_collection_key
+        const collectionKeyNonce = parentFolder?.collection_key_nonce || parentFolder?.encrypted_collection_key_nonce
+
+        if (!encryptedCollectionKey || !collectionKeyNonce) {
+            throw new Error(`Collection key is missing for parent folder ${parentID}`)
+        }
+
+        if (!sessionVault.getMasterKey()) {
+            await restoreSessionKeys()
+        }
+
+        const masterKey = sessionVault.getMasterKey()
+        if (!masterKey) {
+            throw new Error('Master key is unavailable; please sign in again')
+        }
+
+        const encryptedKeyBytes = await fromBase64(encryptedCollectionKey)
+        const nonceBytes = await fromBase64(collectionKeyNonce)
+        if (!encryptedKeyBytes || !nonceBytes) {
+            throw new Error(`Collection key data is invalid for parent folder ${parentID}`)
+        }
+
+        const collectionKey = await decryptCollectionKey(encryptedKeyBytes, nonceBytes, masterKey)
+        if (!collectionKey) {
+            throw new Error(`Could not decrypt collection key for parent folder ${parentID}`)
+        }
+
+        sessionVault.setCollectionKey(parentID, collectionKey)
+    }
+
     useEffect(() => {
         let isActive = true
+        const objectUrls: string[] = []
 
         const decryptItems = async () => {
+            const parentIDs = [...new Set(folderFileData
+                .filter((item) => !item.isfolder && item.parentFolder && item.encrypted_file_key)
+                .map((item) => String(item.parentFolder))
+                .filter((parentID) => resolveParentKeys
+                    ? !resolvedParentIDs.current.has(parentID)
+                    : !sessionVault.hasCollectionKey(parentID)))]
+
+            if (parentIDs.length > 0 && !isShared) {
+                const jwtToken = await getToken()
+                if (!jwtToken) {
+                    throw new Error('Authentication token is unavailable')
+                }
+
+                const keyResults = await Promise.allSettled(
+                    parentIDs.map((parentID) => HandleResolveParentKey(parentID, jwtToken))
+                )
+                keyResults.forEach((result, index) => {
+                    if (result.status === 'fulfilled') {
+                        resolvedParentIDs.current.add(parentIDs[index])
+                    }
+                })
+                const failedKeys = keyResults.filter((result) => result.status === 'rejected')
+                if (failedKeys.length > 0) {
+                    failedKeys.forEach((result) => {
+                        if (result.status === 'rejected') {
+                            console.error('Failed to resolve image parent collection key:', result.reason)
+                        }
+                    })
+                    toast.error('Could not load encryption keys for some image previews.')
+                }
+            }
+
             // here promise.all() is called instead of direct items.map() function just because we are to perform async function within the looped items, so since looped items calls a fucntion usinf await we are uisng promise.all
             const results = await Promise.all(folderFileData.map(async (item) => {
                 if (item.isfolder || !item.encrypted_file_key || !item.file_key_nonce || !item.file_metadata_key_nonce) {
+                    return null
+                }
+
+                if (!isShared && item.parentFolder && !sessionVault.hasCollectionKey(String(item.parentFolder))) {
                     return null
                 }
 
@@ -119,7 +220,22 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                     ? await HandleDecryptMetadata(String(item.parentFolder), item.name, item.encrypted_file_key, item.file_key_nonce, item.file_metadata_key_nonce)
                     : null
 
-                return { id: item.id, metadata }
+
+                const fileContentUrl = item.file_url && item.encryption_header
+                    ? item.name && item.parentFolder
+                        ? await HandleDecryptContent(String(item.parentFolder), item.file_url, item.encryption_header, item.encrypted_file_key, item.file_key_nonce)
+                        : null
+                    : null
+
+                if (fileContentUrl) {
+                    objectUrls.push(fileContentUrl)
+                }
+
+                const enrichedMetadata = metadata
+                    ? { ...metadata, contentURL: fileContentUrl ?? metadata.contentURL }
+                    : metadata
+
+                return { id: item.id, metadata: enrichedMetadata }
             }))
 
             if (isActive) {
@@ -130,15 +246,28 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                     })
                     return next
                 })
+            } else {
+                objectUrls.forEach((url) => URL.revokeObjectURL(url))
             }
         }
 
-        void decryptItems()
-        return () => { isActive = false }
+        void decryptItems().catch((error) => {
+            console.error('Failed to decrypt file previews:', error)
+            toast.error('Unable to load encrypted file previews.')
+        })
+        return () => {
+            isActive = false
+            objectUrls.forEach((url) => URL.revokeObjectURL(url))
+        }
     }, [folderFileData])
 
     const getDisplayName = (item: FileFolderProps) => decryptedMetadata[item.id]?.name || item.name
     const getDisplayExtension = (item: FileFolderProps) => decryptedMetadata[item.id]?.fileType || item.file_extension
+    const getDisplayImage = (item: FileFolderProps) => {
+        const decryptedImage = decryptedMetadata[item.id]?.contentURL
+        if (decryptedImage) return decryptedImage
+        return item.encrypted_file_key ? null : item.file_url
+    }
 
     return (
         <div>
@@ -232,9 +361,9 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                 {
                                                     item.upload_status == 'PENDING' || item.upload_status == 'PROCESSING' || item.upload_status == 'FAILED' ? (
                                                         <ImageProcessing parent='dashboard' />
-                                                    ) : item.file_url ? (
+                                                    ) : getDisplayImage(item) ? (
                                                         <Image
-                                                            src={item.file_url}
+                                                            src={getDisplayImage(item) || ''}
                                                             alt={getDisplayName(item) || 'image'}
                                                             fill
                                                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -324,9 +453,9 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                             {
                                                 item.upload_status == 'PENDING' || item.upload_status == 'PROCESSING' || item.upload_status == 'FAILED' ? (
                                                     <ImageProcessing parent='dashboard' />
-                                                ) : item.file_url ? (
+                                                ) : getDisplayImage(item) ? (
                                                     <Image
-                                                        src={item.file_url}
+                                                    src={getDisplayImage(item) || ''}
                                                         alt={getDisplayName(item) || 'image'}
                                                         fill
                                                         sizes="(max-width: 640px) 112px, 176px"

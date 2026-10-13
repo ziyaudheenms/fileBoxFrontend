@@ -115,7 +115,7 @@ function page() {
 
                     {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
 
-                    <FileFolderCards folderFileData={data} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false} />
+                    <FileFolderCards folderFileData={data} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false} resolveParentKeys />
 
                     {
                         data.length < 1 && !isLoading ? (

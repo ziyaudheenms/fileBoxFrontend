@@ -18,6 +18,10 @@ interface FileFolderProps {
     isfolder: boolean;
     encrypted_collection_key?: string; //this key exists only if the returned record is folder.
     encrypted_collection_key_nonce?: string
+    encrypted_file_key?: string;
+    file_key_nonce?: string;
+    file_metadata_key_nonce?: string;
+    encryption_header?: string;
     is_root_folder: boolean;
     file_url: string | null;
     file_extension: string | null;
