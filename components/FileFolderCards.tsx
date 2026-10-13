@@ -109,6 +109,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
         let isActive = true
 
         const decryptItems = async () => {
+            // here promise.all() is called instead of direct items.map() function just because we are to perform async function within the looped items, so since looped items calls a fucntion usinf await we are uisng promise.all
             const results = await Promise.all(folderFileData.map(async (item) => {
                 if (item.isfolder || !item.encrypted_file_key || !item.file_key_nonce || !item.file_metadata_key_nonce) {
                     return null

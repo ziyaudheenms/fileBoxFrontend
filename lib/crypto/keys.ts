@@ -422,6 +422,7 @@ export async function decryptFileContentStream(
                         cipherBuffer.subarray(0, blockLength),
                         null
                     );
+                    
                     const { message, tag } = result;
                     const isFinal =
                         tag === sodium.crypto_secretstream_xchacha20poly1305_TAG_FINAL;

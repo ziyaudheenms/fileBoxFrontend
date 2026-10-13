@@ -5,7 +5,7 @@
 import { toast } from "sonner"
 import { sessionVault } from "../session-vault"
 import { restoreSessionKeys } from "../sessionPersistance"
-import { decryptCollectionKey, decryptFileKey, decryptFileMetadata, fromBase64 } from "../keys"
+import { decryptCollectionKey, decryptFileContentStream, decryptFileKey, decryptFileMetadata, fromBase64 } from "../keys"
 
 // Both are encrypted with the same encryption key with different nonce (encrypted file key nonce and header nonce)
 //-------------------------------ALGORITHMIC FLOW---------------------------------------------------------------------------    
@@ -96,4 +96,48 @@ export async function FileMetaDataFlow(
     }
 
     return fileMetaData
+}
+
+// Next we have to implement the file content flow part.
+// what we get is the encryted key of the file content.
+
+export async function FileContentFlow(
+    fileUrl: string,
+    streamHeader: string,
+    encryptionKey: string
+):Promise<{
+    decryptedStream: ReadableStream<Uint8Array>
+} | null> {
+
+    // The important thing to look at is that we have to send the encrypted file bytes or the encrypted file data as stream of chunks into the secryption function.
+    // by using the native fecth API we can get the responce as a stream of chunks even if the file gets downloaded as a single file (since imagekit doesnt supports the streaming or chunking of data through https requests)
+    // the responce.body will we stream of chunks and we pass the ReadableStream into the decryption function and function returns the decrypted raw chunks of the original file.
+
+
+    const response = await fetch(fileUrl) //using the native fetch to GET the non-image data
+
+    if (!response.ok || !response.body) {
+        console.log("Cant fetch the resource")
+        return null
+    }
+    // here we have to utilize the stream propertiy for getting thr data as chunks which is inbuild in fetch  
+    // response.body is a ReadableStream and also is a Uint8 array so we just need to pass them.
+
+    const uint8encryptionKey = await fromBase64(encryptionKey)
+    const uint8streamHeader = await fromBase64(streamHeader)
+
+    if (!uint8encryptionKey || !uint8streamHeader) {
+        console.log("Cant find out the keys (encryotion key and the stream key)")
+        return null
+    }
+
+    const decryptedFileData = await decryptFileContentStream(response.body,uint8streamHeader, uint8encryptionKey)
+    if (!decryptedFileData){
+        console.log("something wrong, cant perform the deecryption")
+        return null
+    }
+
+    return {
+        decryptedStream: decryptedFileData
+    }
 }
