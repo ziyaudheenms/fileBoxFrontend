@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from 'next/link';
 import { IconDotsVertical, IconFileStar, IconFolder, IconHeartFilled, IconTrash } from '@tabler/icons-react';
@@ -18,6 +18,7 @@ import { sessionVault } from '@/lib/crypto/session-vault';
 import { decryptCollectionKey, fromBase64 } from '@/lib/crypto/keys';
 import { restoreSessionKeys } from '@/lib/crypto/sessionPersistance';
 import { toast } from 'sonner';
+import { FileMetaDataFlow } from '@/lib/crypto/workflows/decryptFlowOfFiles';
 
 interface FileFolderProps {
     id: number;
@@ -33,7 +34,7 @@ interface FileFolderProps {
 
     encrypted_file_key?: string,
     file_key_nonce?: string,
-    file_metadata_key_nonce ?: string,
+    file_metadata_key_nonce?: string,
 
     is_root_folder: boolean;
     file_url: string | null;
@@ -54,6 +55,13 @@ interface Props {
     shareUUID?: string;
 }
 
+interface FileMetadata {
+    name: string;
+    fileType: string;
+    description: string;
+
+}
+
 
 
 function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavoritePage, isShared, shareUUID }: Props) {
@@ -61,6 +69,8 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
     const { getToken } = useAuth()
     const { isTrashLoading, specificRecordID, isFavoriteLoading } = useAppSelector((state) => state.fileFolders)
     const dispatch = useAppDispatch()
+    const [decryptedMetadata, setDecryptedMetadata] = useState<Record<number, Partial<FileMetadata>>>({})
+
 
     // file folder operations.....
     const HandleTrashUpdation = async (fileFolderID: number) => {
@@ -80,9 +90,54 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
         }))
     }
 
-    const HandleDecryptMetadata = async(fileMetaData: string, fileKey:string, nonce:string) => {
-        
+    const HandleDecryptMetadata = async (id: string, fileMetaData: string, fileKey: string, nonce: string, fileMetadataNonce: string): Promise<FileMetadata | null> => {
+        const metadata = await FileMetaDataFlow(id,
+            fileMetaData,
+            fileKey,
+            nonce,
+            fileMetadataNonce)
+
+        if (!metadata) {
+            toast.error("some error occured with the crypto handling, Login Again")
+            return null
+        }
+
+        return metadata as FileMetadata
     }
+
+    useEffect(() => {
+        let isActive = true
+
+        const decryptItems = async () => {
+            const results = await Promise.all(folderFileData.map(async (item) => {
+                if (item.isfolder || !item.encrypted_file_key || !item.file_key_nonce || !item.file_metadata_key_nonce) {
+                    return null
+                }
+
+                const metadata = item.name && item.parentFolder   // metadata and file keys are encrypted with their parent folder's collection key.
+                    ? await HandleDecryptMetadata(String(item.parentFolder), item.name, item.encrypted_file_key, item.file_key_nonce, item.file_metadata_key_nonce)
+                    : null
+
+                return { id: item.id, metadata }
+            }))
+
+            if (isActive) {
+                setDecryptedMetadata((current) => {
+                    const next = { ...current }
+                    results.forEach((result) => {
+                        if (result?.metadata) next[result.id] = result.metadata
+                    })
+                    return next
+                })
+            }
+        }
+
+        void decryptItems()
+        return () => { isActive = false }
+    }, [folderFileData])
+
+    const getDisplayName = (item: FileFolderProps) => decryptedMetadata[item.id]?.name || item.name
+    const getDisplayExtension = (item: FileFolderProps) => decryptedMetadata[item.id]?.fileType || item.file_extension
 
     return (
         <div>
@@ -139,7 +194,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                     item.author == user?.username ? (
                                                         <div className='absolute top-3 right-2 z-10 flex items-center justify-center h-6 px-2.5 rounded-full border bg-white/90 dark:bg-neutral-900/90 border-red-600/70 shadow-sm'>
                                                             <span className='text-[11px] font-medium text-neutral-900 dark:text-neutral-100 uppercase tracking-wide'>
-                                                                {item.file_extension || 'IMG'}
+                                                                {getDisplayExtension(item) || 'IMG'}
                                                             </span>
                                                         </div>
                                                     ) : (
@@ -179,7 +234,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                     ) : item.file_url ? (
                                                         <Image
                                                             src={item.file_url}
-                                                            alt={item.name || 'image'}
+                                                            alt={getDisplayName(item) || 'image'}
                                                             fill
                                                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                                                             className='object-cover group-hover:scale-105 transition-transform duration-500 ease-out'
@@ -196,8 +251,8 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                 }
                                 <div className='flex flex-col pt-3 pb-2 px-3'>
                                     <div className='flex items-center justify-between gap-2'>
-                                        <h1 className='text-sm text-neutral-900 dark:text-neutral-100 font-figtree font-medium truncate' title={item.name}>
-                                            {item.name}
+                                        <h1 className='text-sm text-neutral-900 dark:text-neutral-100 font-figtree font-medium truncate' title={getDisplayName(item)}>
+                                            {getDisplayName(item)}
                                         </h1>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
@@ -210,7 +265,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                 <DropdownMenuGroup>
                                                     <DropdownMenuItem>
                                                         Name
-                                                        <DropdownMenuShortcut className='text-blue-600 font-bold truncate max-w-[120px]'>{item.name}</DropdownMenuShortcut>
+                                                        <DropdownMenuShortcut className='text-blue-600 font-bold truncate max-w-[120px]'>{getDisplayName(item)}</DropdownMenuShortcut>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem>
                                                         Size
@@ -220,7 +275,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem>
                                                         Type
-                                                        <DropdownMenuShortcut className='text-green-600 font-bold'>{item.file_extension ? item.file_extension : "Folder"}</DropdownMenuShortcut>
+                                                        <DropdownMenuShortcut className='text-green-600 font-bold'>{getDisplayExtension(item) ? getDisplayExtension(item) : "Folder"}</DropdownMenuShortcut>
                                                     </DropdownMenuItem>
                                                     {
                                                         isTrashPage ? null : (
@@ -262,19 +317,19 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                         <Link href={isShared ? `/sharable/folder/${shareUUID}/preview/${item.id}` : `/images/${item.id}`} className='w-28 sm:w-36 md:w-44 h-28 sm:h-32 relative flex-shrink-0 bg-neutral-100 dark:bg-zinc-900 overflow-hidden'>
                                             <div className='absolute top-2 right-2 z-10 flex items-center justify-center h-5 px-2 rounded-full border bg-white/90 dark:bg-neutral-900/90 border-red-600/70 shadow-sm'>
                                                 <span className='text-[10px] font-medium text-neutral-900 dark:text-neutral-100 uppercase tracking-wide'>
-                                                    {item.file_extension || 'IMG'}
+                                                    {getDisplayExtension(item) || 'IMG'}
                                                 </span>
                                             </div>
                                             {
                                                 item.upload_status == 'PENDING' || item.upload_status == 'PROCESSING' || item.upload_status == 'FAILED' ? (
                                                     <ImageProcessing parent='dashboard' />
                                                 ) : item.file_url ? (
-                                                    <Image 
-                                                        src={item.file_url} 
-                                                        alt={item.name || 'image'} 
-                                                        fill 
+                                                    <Image
+                                                        src={item.file_url}
+                                                        alt={getDisplayName(item) || 'image'}
+                                                        fill
                                                         sizes="(max-width: 640px) 112px, 176px"
-                                                        className='object-cover group-hover:scale-105 transition-transform duration-300 ease-out' 
+                                                        className='object-cover group-hover:scale-105 transition-transform duration-300 ease-out'
                                                     />
                                                 ) : (
                                                     <div className='w-full h-full flex items-center justify-center text-neutral-400 text-xs'>No Preview</div>
@@ -285,11 +340,11 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                 }
                                 <div className='flex items-center justify-between py-3 px-4 flex-1 min-w-0'>
                                     <div className='flex flex-col min-w-0 pr-4'>
-                                        <h1 className='text-sm sm:text-base text-neutral-900 dark:text-neutral-100 font-figtree font-medium truncate' title={item.name}>
-                                            {item.name}
+                                        <h1 className='text-sm sm:text-base text-neutral-900 dark:text-neutral-100 font-figtree font-medium truncate' title={getDisplayName(item)}>
+                                            {getDisplayName(item)}
                                         </h1>
                                         <span className='text-xs text-neutral-500 dark:text-neutral-400 mt-1'>
-                                            {item.file_extension ? `${item.file_extension} • ` : 'Folder • '}
+                                            {getDisplayExtension(item) ? `${getDisplayExtension(item)} • ` : 'Folder • '}
                                             {item.size > 1024 * 1024 ? `${(item.size / (1024 * 1024)).toFixed(2)} GB` : item.size > 1024 ? `${(item.size / 1024).toFixed(2)} MB` : `${item.size || 0} KB`}
                                         </span>
                                     </div>
@@ -304,7 +359,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                             <DropdownMenuGroup>
                                                 <DropdownMenuItem>
                                                     Name
-                                                    <DropdownMenuShortcut className='text-blue-600 font-bold truncate max-w-[120px]'>{item.name}</DropdownMenuShortcut>
+                                                    <DropdownMenuShortcut className='text-blue-600 font-bold truncate max-w-[120px]'>{getDisplayName(item)}</DropdownMenuShortcut>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem>
                                                     Size
@@ -314,7 +369,7 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem>
                                                     Type
-                                                    <DropdownMenuShortcut className='text-green-600 font-bold'>{item.file_extension ? item.file_extension : "Folder"}</DropdownMenuShortcut>
+                                                    <DropdownMenuShortcut className='text-green-600 font-bold'>{getDisplayExtension(item) ? getDisplayExtension(item) : "Folder"}</DropdownMenuShortcut>
                                                 </DropdownMenuItem>
                                                 {
                                                     isTrashPage ? null : (

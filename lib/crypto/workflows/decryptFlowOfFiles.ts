@@ -79,7 +79,7 @@ export async function FileMetaDataFlow(
         return null
     }
 
-    const fileKey = await decryptFileKey(Uint8fileKeyNonce, Uint8fileKeyNonce, decryptedCollectionKey)
+    const fileKey = await decryptFileKey(Uint8encryptedFileKey, Uint8fileKeyNonce, decryptedCollectionKey)
 
     if (!fileKey) {
         console.log("file key not found")
