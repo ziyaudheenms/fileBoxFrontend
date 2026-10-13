@@ -280,8 +280,7 @@ export async function encryptFileMetadata(
     metadata: {
         name: string,
         fileType: string,
-        fileUrl: string,
-        decription: string,
+        description: string,
     }
 ): Promise<{ encryptedFileMetadata: Uint8Array; nonce: Uint8Array } | null> {
     try {
@@ -305,7 +304,7 @@ export async function decryptFileMetadata(
     encryptedMetaData: string,
     nonce: string,
     encryptionKey: Uint8Array
-): Promise<{ name: string; fileType: string; fileUrl: string, description: string } | null> {
+): Promise<{ name: string; fileType: string; description: string } | null> {
     try {
         const sodium = await getSodium();
         // the encrypted metadata is converted into the Uint8 array and then it is encrypted with the file encryption key
@@ -324,11 +323,9 @@ export async function decryptFileMetadata(
             metadata === null ||
             !("name" in metadata) ||
             !("fileType" in metadata) ||
-            !("fileUrl" in metadata) ||
             !("description" in metadata) ||
             typeof metadata.name !== "string" ||
             typeof metadata.fileType !== "string" ||
-            typeof metadata.fileUrl !== "string" ||
             typeof metadata.description !== "string"
         ) {
             console.error("Decrypted file metadata has an invalid format");
@@ -338,7 +335,6 @@ export async function decryptFileMetadata(
         return {
             name: metadata.name,
             fileType: metadata.fileType,
-            fileUrl: metadata.fileUrl,
             description: metadata.description
         };
     } catch (error) {

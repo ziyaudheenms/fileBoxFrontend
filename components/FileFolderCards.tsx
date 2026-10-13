@@ -14,6 +14,10 @@ import TrashLoader from './TrashLoader';
 import FavoriteLoader from './FavoriteLoader';
 import { useAuth } from '@clerk/nextjs'
 import { handleFavoriteFileFolderUpdate, handleFileFolderTrashUpdate } from '@/features/FileFoldersSlice';
+import { sessionVault } from '@/lib/crypto/session-vault';
+import { decryptCollectionKey, fromBase64 } from '@/lib/crypto/keys';
+import { restoreSessionKeys } from '@/lib/crypto/sessionPersistance';
+import { toast } from 'sonner';
 
 interface FileFolderProps {
     id: number;
@@ -25,7 +29,12 @@ interface FileFolderProps {
     updated_at: Date;
     isfolder: boolean;
     encrypted_collection_key?: string; //this key exists only if the returned record is folder.
-    encrypted_collection_key_nonce?: string
+    collection_key_nonce?: string
+
+    encrypted_file_key?: string,
+    file_key_nonce?: string,
+    file_metadata_key_nonce ?: string,
+
     is_root_folder: boolean;
     file_url: string | null;
     file_extension: string | null;
@@ -71,6 +80,10 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
         }))
     }
 
+    const HandleDecryptMetadata = async(fileMetaData: string, fileKey:string, nonce:string) => {
+        
+    }
+
     return (
         <div>
             {
@@ -87,9 +100,9 @@ function FileFolderCards({ folderFileData, isGridLayout, isTrashPage, isFavorite
                                 {
                                     item.isfolder ? (
                                         <Link href={isShared ? `/sharable/folder/${shareUUID}/${item.id}` : `/dashboard/${item.id}`} className='block w-full' onClick={() => {
-                                            localStorage.setItem("CURRENT_FOLDER_ENCRYPTED", String(item.encrypted_collection_key))
-                                            localStorage.setItem("CURRENT_FOLDER_ENCRYPTED_NONCE", String(item.encrypted_collection_key_nonce))
-                                            console.log("set the encrypted credentials of the current parent folder")
+                                            console.log(item.encrypted_collection_key, item.collection_key_nonce)
+                                            localStorage.setItem('CURRENT_FOLDER_ENCRYPTED', item.encrypted_collection_key || '');
+                                            localStorage.setItem('CURRENT_FOLDER_ENCRYPTED_NONCE', item.collection_key_nonce || '');
                                         }}>
                                             <div className='relative h-44 w-full bg-neutral-100 dark:bg-zinc-900 flex items-center justify-center rounded-t-lg overflow-hidden'>
                                                 {

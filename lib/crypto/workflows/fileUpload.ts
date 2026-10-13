@@ -33,6 +33,7 @@ export async function fileUploadFlow(
     }
 
     const masterKey = sessionVault.getMasterKey()
+
     if (!masterKey) {
         console.log("crypto credantials not found")
         toast.error('something wrong with the crypto')
@@ -68,7 +69,7 @@ export async function fileUploadFlow(
         }
     }
     else{
-        decryptedCollectionKey = sessionVault.getCollectionKey(folderID)
+        decryptedCollectionKey = sessionVault.getCollectionKey(folderID) ?? null
     }
 
     // Once the collection key is loaded we have to generate the file key

@@ -103,7 +103,20 @@ function CreateFolder({ isRoot, folderID, shareUUID, parentHash, closeToolsDrawe
         console.log(res);
 
         if (res.data.status_code == 5000) {
-          sessionVault.setCollectionKey(String(res.data.data), generatedKey.collectionKey)
+          const createdFolderID = String(res.data.data)
+          sessionVault.setCollectionKey(createdFolderID, generatedKey.collectionKey, encryptedKey.nonce)
+          try {
+            sessionVault.setEncryptedCollectionKey(
+              createdFolderID,
+              encryptedCollectionKey,
+              collectionKeyNonce
+            )
+          } catch (error) {
+            console.error("Failed to persist the encrypted folder key in browser storage:", error)
+            toast.error("Folder created, but its encryption data could not be saved in this browser.")
+          }
+          localStorage.setItem('CURRENT_FOLDER_ENCRYPTED', encryptedCollectionKey);
+          localStorage.setItem('CURRENT_FOLDER_ENCRYPTED_NONCE', collectionKeyNonce);
           toast.success("Folder Successfully Created")
           if (shareUUID) {
             if (parentHash) {

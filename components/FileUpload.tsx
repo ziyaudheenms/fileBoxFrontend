@@ -4,7 +4,7 @@ import { useAuth } from '@clerk/nextjs';
 import { IconFileUpload, IconUpload } from '@tabler/icons-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { encryptFileContent, encryptFileKey, toBase64 } from '@/lib/crypto/keys';
+import { encryptFileContent, encryptFileKey, encryptFileMetadata, toBase64 } from '@/lib/crypto/keys';
 import { fileUploadFlow } from '@/lib/crypto/workflows/fileUpload';
 
 interface FileUploadProps {
@@ -75,17 +75,36 @@ function FileUpload({ isRoot, folderID , shareUUID , parentHash, closeToolsDrawe
 
             const encryptedFileKey = await encryptFileKey(keys.fileKey, keys.collectionKey);
             const encryptedContent = await encryptFileContent(file, keys.fileKey);
-            if (!encryptedFileKey || !encryptedContent) {
+            const encryptedMetadata = await encryptFileMetadata(keys.fileKey, {
+                name: file.name,
+                fileType: file.type,
+                description: "",
+            });
+            if (!encryptedFileKey || !encryptedContent || !encryptedMetadata) {
                 toast.error("Could not encrypt the file for upload.");
                 return;
             }
 
-            const [encryptedFileKeyBase64, fileKeyNonceBase64, streamHeaderBase64] = await Promise.all([
+            const [
+                encryptedFileKeyBase64,
+                fileKeyNonceBase64,
+                encryptedMetadataBase64,
+                metadataNonceBase64,
+                streamHeaderBase64,
+            ] = await Promise.all([
                 toBase64(encryptedFileKey.encryptedFileKey),
                 toBase64(encryptedFileKey.nonce),
+                toBase64(encryptedMetadata.encryptedFileMetadata),
+                toBase64(encryptedMetadata.nonce),
                 toBase64(encryptedContent.header),
             ]);
-            if (!encryptedFileKeyBase64 || !fileKeyNonceBase64 || !streamHeaderBase64) {
+            if (
+                !encryptedFileKeyBase64 ||
+                !fileKeyNonceBase64 ||
+                !encryptedMetadataBase64 ||
+                !metadataNonceBase64 ||
+                !streamHeaderBase64
+            ) {
                 toast.error("Could not prepare encryption data for upload.");
                 return;
             }
@@ -134,9 +153,11 @@ function FileUpload({ isRoot, folderID , shareUUID , parentHash, closeToolsDrawe
                     fileId,
                     fileName: file.name,
                     fileSize: file.size,
-                    fileExtenstion: file.type,
+                    // fileExtenstion: file.type,
                     encryptedFileKey: encryptedFileKeyBase64,
                     fileKeyNonce: fileKeyNonceBase64,
+                    encryptedFileMetadata: encryptedMetadataBase64,
+                    fileMetadataNonce: metadataNonceBase64,
                     encryptionHeader: streamHeaderBase64,
                 }),
             });
