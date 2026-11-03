@@ -19,7 +19,6 @@ import {
     BreadcrumbItem,
     BreadcrumbLink,
     BreadcrumbList,
-    BreadcrumbPage,
     BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import ShareCard from '@/components/ShareCard'
@@ -27,26 +26,26 @@ import MoveOrCopyCard from '@/components/MoveOrCopyCard'
 import UpdateMetaData from '@/components/UpdateMetaData'
 import SearchBar from '@/components/SearchBar'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
-import { getAllFileFolders, handleFavoriteFileFolderUpdate, handleFileFolderTrashUpdate } from '@/features/FileFoldersSlice'
-import Password from '@/components/Password'
+import { getAllFileFolders } from '@/features/FileFoldersSlice'
 import Settings from '@/components/Settings'
 import { useRouter } from 'next/navigation'
-interface BreadCrumProps {folderName: string; folderID: string;}
 
-function page() {
+interface BreadCrumProps { folderName: string; folderID: string; }
+
+export default function Page() {
     const { getToken } = useAuth()
     const [gridLayout, setgridLayout] = useState(true)
-    const [getREQUEST, setGETREQUEST] = useState<string>('http://localhost:8000/api/v1/fileFolders')
     const params = useParams();
-    const { data, isLoading, error, message , breadCrumbs , sessionStatus} = useAppSelector((state) => state.fileFolders)
+    const { data, isLoading, message, breadCrumbs, sessionStatus } = useAppSelector((state) => state.fileFolders)
     const dispatch = useAppDispatch()
     const router = useRouter()
 
+    const parentId = params.id ? params.id[params.id.length - 1] as string : undefined;
 
     const getFileFolders = async (cursor: string | null, samePage: boolean) => {
         const jwtToken = await getToken()
         dispatch(getAllFileFolders({
-            requesturl: cursor ? cursor : `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/fileFolders?parentFolderID=${params.id ? params.id[params.id.length - 1] as string : undefined}`,
+            requesturl: cursor ? cursor : `${process.env.NEXT_PUBLIC_DOMAIN}/api/v1/fileFolders?parentFolderID=${parentId}`,
             jwtToken: jwtToken ? jwtToken : "",
             samePage: samePage
         }))
@@ -56,33 +55,27 @@ function page() {
         getFileFolders(null, false)
     }, [])
 
-
     useEffect(() => {
         if (sessionStatus?.code === 5003 || sessionStatus?.code === 4002 || sessionStatus?.code === 4005) {
             toast.error("Session expired. Please enter password again.")
-            router.push(`/password/${params.id ? params.id[params.id.length - 1] as string : undefined}`)
+            router.push(`/password/${parentId}`)
         }
-       
-    } , [sessionStatus])
+    }, [sessionStatus, parentId, router])
 
-    
     return (
         <div>
             <Navbar />
             <div className='px-2 flex flex-col lg:flex-row pb-6 lg:pb-0'>
                 {/* MAIN SECTION THAT LISTS ALL THE FOLDER/FILES THAT EXISTS */}
-
                 <div className='w-full lg:w-[73%] xl:w-[75%] px-2 py-2 h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar'>
                     <div className='w-full flex items-center justify-between '>
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink href={`/dashboard`}>
-                                        <div className='flex  gap-1'>
-
+                                        <div className='flex gap-1'>
                                             <IconHome stroke={2} height={20} width={20} className='text-neutral-100' />
                                             <h4 className='text-neutral-100 font-sans'>Home</h4>
-
                                         </div>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
@@ -91,7 +84,7 @@ function page() {
                                         return (
                                             <div key={`${bread.folderID}-separator`} className='flex items-center gap-1'>
                                                 <BreadcrumbSeparator className='text-lg' />
-                                                <BreadcrumbItem >
+                                                <BreadcrumbItem>
                                                     <BreadcrumbLink href={`/dashboard/${bread.folderID}`}>
                                                         <h4 className='text-neutral-100 font-sans'>{bread.folderName}</h4>
                                                     </BreadcrumbLink>
@@ -104,7 +97,7 @@ function page() {
                         </Breadcrumb>
                         <div className='flex items-center gap-2'>
                             <InputGroup>
-                                <InputGroupInput placeholder="Search..." className='placeholder:text-neutral-400  text-neutral-100' />
+                                <InputGroupInput placeholder="Search..." className='placeholder:text-neutral-400 text-neutral-100' />
                                 <InputGroupAddon>
                                     <SearchIcon />
                                 </InputGroupAddon>
@@ -113,16 +106,16 @@ function page() {
                                 gridLayout ? (
                                     <ButtonGroup>
                                         <Button variant="outline"><IconLayoutGridRemove stroke={2} height={20} width={20} /></Button>
-                                        <Button onClick={() => {
-                                            setgridLayout(!gridLayout)
-                                        }}><IconList stroke={2} height={20} width={20} /></Button>
+                                        <Button onClick={() => setgridLayout(!gridLayout)}>
+                                            <IconList stroke={2} height={20} width={20} />
+                                        </Button>
                                     </ButtonGroup>
                                 ) : (
                                     <ButtonGroup>
-                                        <Button onClick={() => {
-                                            setgridLayout(!gridLayout)
-                                        }}><IconLayoutGridRemove stroke={2} height={20} width={20} /></Button>
-                                        <Button variant="outline" ><IconList stroke={2} height={20} width={20} /></Button>
+                                        <Button onClick={() => setgridLayout(!gridLayout)}>
+                                            <IconLayoutGridRemove stroke={2} height={20} width={20} />
+                                        </Button>
+                                        <Button variant="outline"><IconList stroke={2} height={20} width={20} /></Button>
                                     </ButtonGroup>
                                 )
                             }
@@ -137,8 +130,7 @@ function page() {
                     </div>
 
                     {/* GRID LAYOUT FOR LISTING THE FOLDER/FILES */}
-
-                    <FileFolderCards folderFileData={data} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false}  />
+                    <FileFolderCards folderFileData={data} isFavoritePage={false} isGridLayout={gridLayout} isTrashPage={false} />
 
                     {
                         !isLoading && data.length < 1 ? (
@@ -152,7 +144,7 @@ function page() {
                         {
                             message.next_cursor ? (
                                 <Button className='font-light' onClick={() => {
-                                    getFileFolders(`${message.next_cursor}&parentFolderID=${params.id ? params.id[params.id.length - 1] as string : undefined}`, true)
+                                    getFileFolders(`${message.next_cursor}&parentFolderID=${parentId}`, true)
                                 }}>Load More...</Button>
                             ) : (
                                 <div></div>
@@ -168,21 +160,18 @@ function page() {
                         )
                     }
                 </div>
-                {/* ADDITIONAL DETAILS RIGHT SECTION ALONG WITH UPLOAD OPTIONS */}
 
+                {/* ADDITIONAL DETAILS RIGHT SECTION ALONG WITH UPLOAD OPTIONS */}
                 <div className='w-full lg:w-[27%] xl:w-[25%] px-2 py-2 flex flex-col gap-3 h-auto lg:h-screen lg:overflow-y-scroll no-scrollbar'>
-                    {/*UPLOAD OPTIONS */}
-                    <SearchBar scope={params.id ? params.id[params.id.length - 1] as string : undefined} />
-                    <FileUpload isRoot={true} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
-                    <CreateFolder isRoot={false} folderID={params.id ? params.id[params.id.length - 1] as string : undefined} />
-                    <ShareCard fileFolderID={params.id ? parseInt(params.id[params.id.length - 1] as string) : 0} type={'folder'} isShared={false} isOwner={true} />
-                    <MoveOrCopyCard sourceID={params.id ? params.id[params.id.length - 1] as string : ""} type={'folder'} isShared={false} />
-                    <UpdateMetaData fileID={params.id ? params.id[params.id.length - 1] as string : undefined} type='folder' />
-                    <Settings fileFolderID={params.id ? params.id[params.id.length - 1] as string : undefined}/>  // passing the parentFolderID
+                    <SearchBar scope={parentId} />
+                    <FileUpload isRoot={true} folderID={parentId} />
+                    <CreateFolder isRoot={false} folderID={parentId} />
+                    <ShareCard fileFolderID={parentId ? parseInt(parentId) : 0} type={'folder'} isShared={false} isOwner={true} />
+                    <MoveOrCopyCard sourceID={parentId ? parentId : ""} type={'folder'} isShared={false} />
+                    <UpdateMetaData fileID={parentId} type='folder' />
+                    <Settings fileFolderID={parentId} />
                 </div>
             </div>
         </div>
     )
 }
-
-export default page
