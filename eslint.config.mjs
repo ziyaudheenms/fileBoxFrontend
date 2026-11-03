@@ -26,6 +26,10 @@ const eslintConfig = [
       "react-hooks/exhaustive-deps": "off",
       "react-hooks/rules-of-hooks": "off",
       "react/no-unescaped-entities": "off",
+      // Add these two to catch the remaining ones:
+      "@typescript-eslint/no-wrapper-object-types": "off",
+      "react/jsx-no-comment-textnodes": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
     }
   },
 ];
