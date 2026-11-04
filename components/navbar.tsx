@@ -2,10 +2,9 @@
 import React from 'react'
 import {
   ClerkProvider,
+  Show,
   SignInButton,
   SignUpButton,
-  SignedIn,
-  SignedOut,
   UserButton,
 } from '@clerk/nextjs'
 // import { IconCheck, IconInfoCircle, IconPlus } from "@tabler/icons-react"
@@ -47,7 +46,7 @@ function Navbar() {
           </div>
         </div>
         <div className='flex justify-center items-center gap-2 border-l-2 border-neutral-300 dark:border-neutral-600 pl-2 sm:px-2 flex-shrink-0'>
-          <SignedOut>
+          <Show when="signed-out">
             <button className="bg-blue-600 text-white text-xs sm:text-sm py-1 px-2 sm:px-3 rounded-lg hover:cursor-pointer hover:opacity-80" onClick={() => {
               router.push("/sign-in")
             }}>
@@ -58,14 +57,14 @@ function Navbar() {
             }}>
               Sign Up
             </button>
-          </SignedOut>
-          <SignedIn>
+          </Show>
+          <Show when="signed-in">
             <div className='hidden sm:block text-right'>
               <h1 className='text-sm sm:text-base font-medium font-figtree text-neutral-900 dark:text-neutral-200 truncate max-w-[120px]'>{user?.username}</h1>
               <p className='text-xs font-sans text-neutral-500 dark:text-neutral-400'>Free Plan</p>
             </div>
             <UserButton />
-          </SignedIn>
+          </Show>
         </div>
       </header>
     </div>

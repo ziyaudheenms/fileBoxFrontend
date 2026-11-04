@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { IconArrowRight, IconLock } from '@tabler/icons-react'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { handlePasswordToGetSession } from '@/features/FileFoldersSlice'
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth } from '@clerk/nextjs'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation';
 

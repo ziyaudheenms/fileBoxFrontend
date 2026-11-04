@@ -3,8 +3,6 @@ import {
   ClerkProvider,
   SignInButton,
   SignUpButton,
-  SignedIn,
-  SignedOut,
   UserButton,
 } from '@clerk/nextjs'
 import { Geist, Geist_Mono, Plus_Jakarta_Sans } from 'next/font/google'

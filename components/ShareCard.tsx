@@ -17,7 +17,7 @@ import { User2 } from 'lucide-react'
 import { ButtonGroup } from './ui/button-group'
 import InfiniteLoader from './InfiniteLoader'
 import { useUser } from '@clerk/nextjs'
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth } from '@clerk/nextjs'
 import axios from 'axios'
 import { toast } from 'sonner'
 import Image from "next/image"
