@@ -45,7 +45,7 @@ interface FileFolderProps {
     celery_task_ID: string | null;
     is_trash: boolean;
     is_favorite: boolean;
-    profile_image: string
+    profile_image?: string
 }
 
 interface Props {
