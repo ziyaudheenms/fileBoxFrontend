@@ -104,6 +104,7 @@ export default function SignInPage() {
         await persistSessionKeys(
           loggedInSession.masterKey,
           loggedInSession.privateKey,
+          sessionData.user_public_key
         );
 
         toast.success('Logged In successfully !')
